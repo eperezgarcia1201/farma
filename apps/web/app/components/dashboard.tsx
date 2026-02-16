@@ -40,7 +40,14 @@ type Customer = { id: string; firstName: string; lastName: string; phone?: strin
 type Supplier = { id: string; name: string; contactName?: string | null; phone?: string | null };
 type Employee = { id: string; firstName: string; lastName: string; role: string };
 type Receivable = { id: string; balance?: string | number; dueDate?: string; status?: string; customer?: { firstName?: string; lastName?: string } | null };
-type Payable = { id: string; balance?: string | number; dueDate?: string; status?: string; supplier?: { name?: string } | null };
+type Payable = {
+  id: string;
+  balance?: string | number;
+  dueDate?: string;
+  status?: string;
+  supplier?: { name?: string } | null;
+  purchase?: { paymentMethod?: string } | null;
+};
 type Expense = { id: string; category: string; description?: string; amount?: string | number; paymentMethod?: string; expenseDate?: string };
 type TopProduct = { productId: string; _sum?: { quantity?: string | number; lineTotal?: string | number } };
 type SaleCreated = {
@@ -140,6 +147,13 @@ type EditInvoiceItem = {
   quantity: string;
   unitPrice: string;
 };
+type PurchaseItemForm = {
+  productId: string;
+  batchNumber: string;
+  quantity: string;
+  unitCost: string;
+  unitPrice: string;
+};
 type CurrencyCode = 'NIO' | 'USD';
 type ExchangeRate = {
   base: 'USD';
@@ -210,6 +224,8 @@ const text: Record<Lang, Dict> = {
     payablesCard: 'Payables',
     expensesCard: 'Expenses',
     stockHealthy: 'Stock healthy',
+    registeredProducts: 'Products registered',
+    clickToOpen: 'Tap to open',
     overdueInvoices: 'overdue invoices',
     upcomingBills: 'upcoming bills',
     last7days: 'Last 7 days',
@@ -260,6 +276,8 @@ const text: Record<Lang, Dict> = {
     days45: '45 days',
     days60: '60 days',
     amountPaid: 'Amount Paid',
+    downPayment: 'Down Payment / Advance',
+    autoCashPaid: 'Auto paid for cash invoice',
     supplier: 'Supplier',
     customer: 'Customer',
     customerSearch: 'Find customer (name / last name)',
@@ -284,6 +302,9 @@ const text: Record<Lang, Dict> = {
     exportCsv: 'Export CSV',
     exportExcel: 'Export Excel',
     reportPeriod: 'Period',
+    periodType: 'Period type',
+    month: 'Month',
+    week: 'Week',
     update: 'Update',
     currentPeriod: 'Current period',
     invoicePreview: 'Invoice Preview',
@@ -313,6 +334,10 @@ const text: Record<Lang, Dict> = {
     invoiceSummary: 'Invoice Summary',
     all: 'All',
     markPaid: 'Mark Paid',
+    addPayment: 'Add Payment',
+    paymentAmountPrompt: 'Payment amount',
+    invalidPaymentAmount: 'Enter a valid amount greater than 0.',
+    paymentRecorded: 'Payment recorded',
     paidStamp: 'PAID',
     lowStockAlerts: 'Low Stock Alerts',
     expiringLots: 'Expiring Lots',
@@ -374,6 +399,8 @@ const text: Record<Lang, Dict> = {
     payablesCard: 'Cuentas por Pagar',
     expensesCard: 'Gastos',
     stockHealthy: 'Stock saludable',
+    registeredProducts: 'Productos registrados',
+    clickToOpen: 'Toca para abrir',
     overdueInvoices: 'facturas vencidas',
     upcomingBills: 'pagos pendientes',
     last7days: 'Ultimos 7 dias',
@@ -424,6 +451,8 @@ const text: Record<Lang, Dict> = {
     days45: '45 dias',
     days60: '60 dias',
     amountPaid: 'Monto Pagado',
+    downPayment: 'Anticipo / Abono',
+    autoCashPaid: 'Pagado automatico para factura de contado',
     supplier: 'Proveedor',
     customer: 'Cliente',
     customerSearch: 'Buscar cliente (nombre / apellido)',
@@ -448,6 +477,9 @@ const text: Record<Lang, Dict> = {
     exportCsv: 'Exportar CSV',
     exportExcel: 'Exportar Excel',
     reportPeriod: 'Periodo',
+    periodType: 'Tipo de periodo',
+    month: 'Mes',
+    week: 'Semana',
     update: 'Actualizar',
     currentPeriod: 'Periodo actual',
     invoicePreview: 'Vista Previa de Factura',
@@ -477,6 +509,10 @@ const text: Record<Lang, Dict> = {
     invoiceSummary: 'Resumen de Factura',
     all: 'Todo',
     markPaid: 'Marcar Pagada',
+    addPayment: 'Registrar Abono',
+    paymentAmountPrompt: 'Monto del abono',
+    invalidPaymentAmount: 'Ingresa un monto valido mayor a 0.',
+    paymentRecorded: 'Abono registrado',
     paidStamp: 'PAGADO',
     lowStockAlerts: 'Alertas de Stock Bajo',
     expiringLots: 'Lotes por Vencer',
@@ -572,6 +608,25 @@ const daysDiffFromToday = (v: string | undefined) => {
   return Math.round((targetStart - todayStart) / dayMs);
 };
 
+const getIsoWeekValue = (value: Date | string | undefined) => {
+  if (!value) return '';
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const utcDate = new Date(
+    Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+  );
+  const weekDay = utcDate.getUTCDay() || 7;
+  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - weekDay);
+  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(
+    ((utcDate.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7
+  );
+  return `${utcDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+};
+
+const todayMonthValue = () => new Date().toISOString().slice(0, 7);
+const todayWeekValue = () => getIsoWeekValue(new Date());
+
 const n = (v: string) => {
   const parsed = Number(v);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -625,9 +680,9 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
-  const [reportPeriod, setReportPeriod] = useState(
-    new Date().toISOString().slice(0, 7)
-  );
+  const [reportMode, setReportMode] = useState<'month' | 'week'>('month');
+  const [reportPeriod, setReportPeriod] = useState(todayMonthValue);
+  const [reportCustomerQuery, setReportCustomerQuery] = useState('');
 
   const [stats, setStats] = useState<Stats>({});
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
@@ -703,7 +758,22 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<InvoiceStatusFilter>('ALL');
   const [invoiceViewReturnSection, setInvoiceViewReturnSection] = useState<'open' | 'past'>('past');
   const [lastInvoiceItems, setLastInvoiceItems] = useState<Array<{ productName: string; quantity: number; unitPrice: number; lineTotal: number }>>([]);
-  const [purchaseForm, setPurchaseForm] = useState({ supplierId: '', productId: '', batchNumber: '', quantity: '1', unitCost: '0', unitPrice: '0', employeeId: '', paymentMethod: 'CASH' as PaymentMethod, creditTermDays: 'DAYS_30' as CreditTermDays, amountPaid: '0' });
+  const [purchaseForm, setPurchaseForm] = useState({
+    supplierId: '',
+    employeeId: '',
+    paymentMethod: 'CASH' as PaymentMethod,
+    creditTermDays: 'DAYS_30' as CreditTermDays,
+    amountPaid: '0'
+  });
+  const [purchaseItems, setPurchaseItems] = useState<PurchaseItemForm[]>([
+    {
+      productId: '',
+      batchNumber: '',
+      quantity: '1',
+      unitCost: '0',
+      unitPrice: '0'
+    }
+  ]);
   const [expenseForm, setExpenseForm] = useState({ category: '', description: '', amount: '0', paymentMethod: 'CASH' as PaymentMethod });
   const [companyForm, setCompanyForm] = useState<CompanyProfile>({
     companyName: 'Haytazentavo',
@@ -897,12 +967,16 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
 
     try {
+      const effectiveSaleAmountPaidNio =
+        saleForm.paymentMethod === 'CASH'
+          ? saleTotalNio
+          : toNio(n(saleForm.amountPaid), saleCurrency);
       const created = await apiPost<SaleCreated>('sales', {
         customerId: saleForm.customerId || undefined,
         employeeId: saleForm.employeeId || undefined,
         paymentMethod: saleForm.paymentMethod,
         creditTermDays: saleForm.paymentMethod === 'CREDIT' ? saleForm.creditTermDays : undefined,
-        amountPaid: toNio(n(saleForm.amountPaid), saleCurrency),
+        amountPaid: effectiveSaleAmountPaidNio,
         discount: saleDiscountNio,
         tax: saleTaxNio,
         items: validItems
@@ -924,8 +998,20 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   async function savePurchase() {
-    if (purchaseForm.paymentMethod === 'CREDIT' && !purchaseForm.supplierId) {
+    if (!purchaseForm.supplierId) {
       setNote(t.invalidCreditPurchase);
+      return;
+    }
+
+    const validPurchaseItems = purchaseSummary.items.map((item) => ({
+      productId: item.productId,
+      batchNumber: item.batchNumber,
+      quantity: item.quantity,
+      unitCost: item.unitCost,
+      unitPrice: item.unitPrice
+    }));
+    if (validPurchaseItems.length === 0) {
+      setNote(`${t.savePurchase} ${t.failed}: ${t.itemLines}`);
       return;
     }
 
@@ -935,18 +1021,28 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
         employeeId: purchaseForm.employeeId || undefined,
         paymentMethod: purchaseForm.paymentMethod,
         creditTermDays: purchaseForm.paymentMethod === 'CREDIT' ? purchaseForm.creditTermDays : undefined,
-        amountPaid: n(purchaseForm.amountPaid),
-        items: [
-          {
-            productId: purchaseForm.productId,
-            batchNumber: purchaseForm.batchNumber,
-            quantity: n(purchaseForm.quantity),
-            unitCost: n(purchaseForm.unitCost),
-            unitPrice: n(purchaseForm.unitPrice)
-          }
-        ]
+        amountPaid:
+          purchaseForm.paymentMethod === 'CASH'
+            ? purchaseSummary.subtotal
+            : n(purchaseForm.amountPaid),
+        items: validPurchaseItems
       });
-      setPurchaseForm({ supplierId: '', productId: '', batchNumber: '', quantity: '1', unitCost: '0', unitPrice: '0', employeeId: '', paymentMethod: 'CASH', creditTermDays: 'DAYS_30', amountPaid: '0' });
+      setPurchaseForm({
+        supplierId: '',
+        employeeId: '',
+        paymentMethod: 'CASH',
+        creditTermDays: 'DAYS_30',
+        amountPaid: '0'
+      });
+      setPurchaseItems([
+        {
+          productId: '',
+          batchNumber: '',
+          quantity: '1',
+          unitCost: '0',
+          unitPrice: '0'
+        }
+      ]);
       await refresh();
       setNote(t.savePurchase);
     } catch (err) {
@@ -986,27 +1082,23 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
-  const reportRows = useMemo(
-    () =>
-      topProducts.map((r) => ({
-        productId: r.productId,
-        quantity: money(r._sum?.quantity),
-        total: money(r._sum?.lineTotal)
-      })),
-    [topProducts]
-  );
+  const matchesReportPeriod = (dateValue?: string) => {
+    if (!dateValue) return false;
+    if (reportMode === 'month') return dateValue.slice(0, 7) === reportPeriod;
+    return getIsoWeekValue(dateValue) === reportPeriod;
+  };
 
   const filteredReceivables = useMemo(
-    () => receivables.filter((r) => (r.dueDate ?? '').startsWith(reportPeriod)),
-    [receivables, reportPeriod]
+    () => receivables.filter((r) => matchesReportPeriod(r.dueDate)),
+    [receivables, reportMode, reportPeriod]
   );
   const filteredPayables = useMemo(
-    () => payables.filter((p) => (p.dueDate ?? '').startsWith(reportPeriod)),
-    [payables, reportPeriod]
+    () => payables.filter((p) => matchesReportPeriod(p.dueDate)),
+    [payables, reportMode, reportPeriod]
   );
   const filteredExpenses = useMemo(
-    () => expenses.filter((e) => (e.expenseDate ?? '').startsWith(reportPeriod)),
-    [expenses, reportPeriod]
+    () => expenses.filter((e) => matchesReportPeriod(e.expenseDate)),
+    [expenses, reportMode, reportPeriod]
   );
   const isOpenDocument = (status?: string) =>
     ['OPEN', 'PARTIALLY_PAID', 'OVERDUE'].includes((status ?? '').toUpperCase());
@@ -1167,10 +1259,10 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
       .slice(0, 14);
   }, [salesHistory, purchasesHistory, expenses, t.activityExpense, t.activityPurchase, t.activitySale]);
   const periodSales = salesHistory.filter((row) =>
-    (row.soldAt ?? '').startsWith(reportPeriod)
+    matchesReportPeriod(row.soldAt)
   );
   const periodPurchases = purchasesHistory.filter((row) =>
-    (row.purchasedAt ?? '').startsWith(reportPeriod)
+    matchesReportPeriod(row.purchasedAt)
   );
   const periodSalesTotal = periodSales.reduce((sum, row) => sum + num(row.total), 0);
   const periodPurchasesTotal = periodPurchases.reduce(
@@ -1181,6 +1273,56 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     (sum, row) => sum + num(row.amount),
     0
   );
+  const periodCustomerInvoicesRows = periodSales
+    .filter((sale) => {
+      if (!reportCustomerQuery.trim()) return true;
+      const customerName = `${sale.customer?.firstName ?? ''} ${sale.customer?.lastName ?? ''}`
+        .toLowerCase()
+        .trim();
+      return customerName.includes(reportCustomerQuery.trim().toLowerCase());
+    })
+    .map((sale) => ({
+      invoice: humanInvoiceNumber(sale),
+      customer: `${sale.customer?.firstName ?? '-'} ${sale.customer?.lastName ?? ''}`.trim(),
+      date: dateShort(sale.soldAt),
+      paymentMethod:
+        (sale.paymentMethod ?? '').toUpperCase() === 'CREDIT'
+          ? t.credit
+          : (sale.paymentMethod ?? '').toUpperCase() === 'CASH'
+            ? t.cash
+            : '-',
+      total: num(sale.total),
+      balance: num(sale.balanceDue),
+      status: (sale.status ?? '').toUpperCase().replaceAll('_', ' ') || '-'
+    }));
+  const periodTopProductsRows = useMemo(() => {
+    const byProduct = new Map<
+      string,
+      { productId: string; quantity: number; total: number }
+    >();
+    periodSales.forEach((sale) => {
+      (sale.items ?? []).forEach((item) => {
+        const productName = item.product?.name ?? item.product?.id ?? '-';
+        const key = `${item.product?.id ?? productName}`;
+        const prev = byProduct.get(key) ?? {
+          productId: productName,
+          quantity: 0,
+          total: 0
+        };
+        prev.quantity += num(item.quantity);
+        prev.total += num(item.lineTotal);
+        byProduct.set(key, prev);
+      });
+    });
+    return [...byProduct.values()]
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 12);
+  }, [periodSales]);
+  const reportRows = periodTopProductsRows.map((row) => ({
+    productId: row.productId,
+    quantity: money(row.quantity),
+    total: money(row.total)
+  }));
   const periodNetFlow = periodSalesTotal - periodPurchasesTotal - periodExpensesTotal;
   const inventoryValue = catalog.reduce(
     (sum, row) => sum + num(row.currentStock) * num(row.currentCost),
@@ -1197,6 +1339,15 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const overdueInvoicesCount = salesHistory.filter((sale) => {
     if (!isOpenDocument(sale.status) || !sale.dueDate) return false;
     return daysDiffFromToday(sale.dueDate) < 0;
+  }).length;
+  const overdueReceivablesCount = receivables.filter((row) => {
+    if (!isOpenDocument(row.status) || !row.dueDate) return false;
+    return daysDiffFromToday(row.dueDate) < 0;
+  }).length;
+  const upcomingPayablesCount = payables.filter((row) => {
+    if (!isOpenDocument(row.status) || !row.dueDate) return false;
+    const daysLeft = daysDiffFromToday(row.dueDate);
+    return daysLeft >= 0 && daysLeft <= 7;
   }).length;
 
   function exportReportsCsv() {
@@ -1270,6 +1421,9 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     filteredExpenses.forEach((e) =>
       rows.push(['EXPENSES', e.category, '', money(e.amount), e.paymentMethod ?? '-'])
     );
+    periodCustomerInvoicesRows.forEach((row) =>
+      rows.push(['CUSTOMER_INVOICES', row.customer, row.invoice, money(row.total), row.status])
+    );
 
     const header = ['section', 'item', 'metric_a', 'metric_b', 'metric_c'];
     const content = [header, ...rows]
@@ -1280,7 +1434,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `farma_reports_${reportPeriod}.csv`;
+    a.download = `farma_reports_${reportMode}_${reportPeriod}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -1292,6 +1446,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
       workbook,
       XLSX.utils.json_to_sheet([
         {
+          periodType: reportMode,
           period: reportPeriod,
           sales: periodSalesTotal,
           purchases: periodPurchasesTotal,
@@ -1304,6 +1459,18 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
         }
       ]),
       'Overview'
+    );
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.json_to_sheet(
+        periodTopProductsRows.map((row) => ({
+          productId: row.productId,
+          quantity: row.quantity,
+          total: row.total
+        }))
+      ),
+      'TopProducts'
     );
 
     XLSX.utils.book_append_sheet(
@@ -1388,6 +1555,22 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     XLSX.utils.book_append_sheet(
       workbook,
       XLSX.utils.json_to_sheet(
+        periodCustomerInvoicesRows.map((row) => ({
+          customer: row.customer,
+          invoice: row.invoice,
+          date: row.date,
+          paymentMethod: row.paymentMethod,
+          total: row.total,
+          balance: row.balance,
+          status: row.status
+        }))
+      ),
+      'CustomerInvoices'
+    );
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.json_to_sheet(
         filteredReceivables.map((r) => ({
           customer: `${r.customer?.firstName ?? '-'} ${r.customer?.lastName ?? ''}`.trim(),
           balance: num(r.balance),
@@ -1439,7 +1622,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
       'Catalog'
     );
 
-    XLSX.writeFile(workbook, `farma_reports_${reportPeriod}.xlsx`);
+    XLSX.writeFile(workbook, `farma_reports_${reportMode}_${reportPeriod}.xlsx`);
   }
 
   function printInvoice() {
@@ -1883,6 +2066,40 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     },
     { subtotal: 0, items: [] as Array<{ productId: string; productName: string; quantity: number; unitPrice: number; lineTotal: number }> }
   );
+  const purchaseSummary = purchaseItems.reduce(
+    (acc, row) => {
+      const product = catalog.find((p) => p.id === row.productId);
+      const qty = n(row.quantity);
+      const cost = n(row.unitCost);
+      const price = n(row.unitPrice);
+      const lineTotal = qty * cost;
+      acc.subtotal += lineTotal;
+      if (product && qty > 0 && cost >= 0) {
+        acc.items.push({
+          productId: product.id,
+          productName: product.name,
+          batchNumber: row.batchNumber || `LOT-${Date.now()}`,
+          quantity: qty,
+          unitCost: cost,
+          unitPrice: price,
+          lineTotal
+        });
+      }
+      return acc;
+    },
+    {
+      subtotal: 0,
+      items: [] as Array<{
+        productId: string;
+        productName: string;
+        batchNumber: string;
+        quantity: number;
+        unitCost: number;
+        unitPrice: number;
+        lineTotal: number;
+      }>
+    }
+  );
   const nioPerUsd = num(exchangeRate.rate) > 0 ? num(exchangeRate.rate) : 36.5;
   const fromNio = (value: number, currency: CurrencyCode) =>
     currency === 'USD' ? value / nioPerUsd : value;
@@ -1895,7 +2112,10 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const saleSubtotalDisplay = fromNio(saleSummary.subtotal, saleCurrency);
   const saleTaxDisplay = fromNio(saleTaxNio, saleCurrency);
   const saleTotalDisplay = fromNio(saleTotalNio, saleCurrency);
-  const saleAmountPaidDisplay = Math.max(0, n(saleForm.amountPaid));
+  const saleAmountPaidDisplay =
+    saleForm.paymentMethod === 'CASH'
+      ? Math.max(0, saleTotalDisplay)
+      : Math.max(0, n(saleForm.amountPaid));
   const saleBalanceDisplay = Math.max(0, saleTotalDisplay - saleAmountPaidDisplay);
   const currentSaleStatus =
     saleBalanceDisplay <= 0
@@ -1911,6 +2131,30 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const quoteTotalDisplay = fromNio(quoteTotalNio, quoteCurrency);
   const quoteAmountPaidDisplay = Math.max(0, n(quoteForm.amountPaid));
   const quoteBalanceDisplay = Math.max(0, quoteTotalDisplay - quoteAmountPaidDisplay);
+  const purchaseAmountPaidDisplay =
+    purchaseForm.paymentMethod === 'CASH'
+      ? Math.max(0, purchaseSummary.subtotal)
+      : Math.max(0, n(purchaseForm.amountPaid));
+  const purchaseBalanceDisplay = Math.max(0, purchaseSummary.subtotal - purchaseAmountPaidDisplay);
+
+  useEffect(() => {
+    if (saleForm.paymentMethod !== 'CASH') return;
+    const autoPaid = asMoneyInput(Math.max(0, saleTotalDisplay));
+    if (saleForm.amountPaid === autoPaid) return;
+    setSaleForm((prev) => ({ ...prev, amountPaid: autoPaid }));
+  }, [saleForm.paymentMethod, saleForm.amountPaid, saleTotalDisplay]);
+
+  useEffect(() => {
+    if (purchaseForm.paymentMethod !== 'CASH') return;
+    const autoPaid = asMoneyInput(Math.max(0, purchaseSummary.subtotal));
+    if (purchaseForm.amountPaid === autoPaid) return;
+    setPurchaseForm((prev) => ({ ...prev, amountPaid: autoPaid }));
+  }, [purchaseForm.paymentMethod, purchaseForm.amountPaid, purchaseSummary.subtotal]);
+
+  useEffect(() => {
+    setReportPeriod(reportMode === 'month' ? todayMonthValue() : todayWeekValue());
+  }, [reportMode]);
+
   const selectedSaleInvoice = salesHistory.find((s) => s.id === selectedInvoiceId) ?? null;
   const previewInvoice = selectedSaleInvoice ?? lastSale;
   const previewInvoiceItems = selectedSaleInvoice
@@ -2002,20 +2246,61 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     });
     setInvoiceSection('edit');
   };
-  const markInvoicePaid = async (sale: { id: string; total?: string | number }) => {
+  const applyInvoicePayment = async (
+    sale: { id: string; total?: string | number; amountPaid?: string | number },
+    mode: 'full' | 'partial'
+  ) => {
+    const total = num(sale.total);
+    const currentPaid = num(sale.amountPaid);
+    const balance = Math.max(0, total - currentPaid);
+    if (balance <= 0) {
+      setNote(`${t.markPaid}: ${humanInvoiceNumber(sale as InvoiceLike)}`);
+      return;
+    }
+
+    let paymentAmount = balance;
+    if (mode === 'partial') {
+      const entered = window.prompt(
+        `${t.paymentAmountPrompt} (C$ ${money(balance)}):`,
+        asMoneyInput(balance)
+      );
+      if (entered === null) return;
+      paymentAmount = Math.min(balance, Math.max(0, n(entered)));
+      if (paymentAmount <= 0) {
+        setNote(t.invalidPaymentAmount);
+        return;
+      }
+    }
+
     try {
       await apiPatch(`sales/${sale.id}`, {
-        amountPaid: num(sale.total)
+        amountPaid: Math.min(total, currentPaid + paymentAmount)
       });
       await refresh();
       setSelectedInvoiceId(sale.id);
-      setInvoiceViewReturnSection('past');
+      setInvoiceViewReturnSection(
+        mode === 'full' || currentPaid + paymentAmount >= total ? 'past' : 'open'
+      );
       setInvoiceSection('detail');
-      setNote(`${t.markPaid} ${humanInvoiceNumber(sale as InvoiceLike)}`);
+      setNote(
+        mode === 'full'
+          ? `${t.markPaid} ${humanInvoiceNumber(sale as InvoiceLike)}`
+          : `${t.paymentRecorded} ${humanInvoiceNumber(sale as InvoiceLike)}`
+      );
     } catch (err) {
       setNote(`${t.markPaid} ${t.failed}: ${String(err)}`);
     }
   };
+  const markInvoicePaid = (sale: {
+    id: string;
+    total?: string | number;
+    amountPaid?: string | number;
+  }) => applyInvoicePayment(sale, 'full');
+  const addInvoicePayment = (sale: {
+    id: string;
+    total?: string | number;
+    amountPaid?: string | number;
+  }) => applyInvoicePayment(sale, 'partial');
 
   const setSaleItemField = (index: number, field: 'productId' | 'quantity', value: string) => {
     setSaleItems((prev) => prev.map((row, idx) => (idx === index ? { ...row, [field]: value } : row)));
@@ -2030,6 +2315,24 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     setQuoteItems((prev) => [...prev, { productId: '', quantity: '1' }]);
   const removeQuoteItem = (index: number) =>
     setQuoteItems((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, idx) => idx !== index)
+    );
+  const setPurchaseItemField = (
+    index: number,
+    field: keyof PurchaseItemForm,
+    value: string
+  ) => {
+    setPurchaseItems((prev) =>
+      prev.map((row, idx) => (idx === index ? { ...row, [field]: value } : row))
+    );
+  };
+  const addPurchaseItem = () =>
+    setPurchaseItems((prev) => [
+      ...prev,
+      { productId: '', batchNumber: '', quantity: '1', unitCost: '0', unitPrice: '0' }
+    ]);
+  const removePurchaseItem = (index: number) =>
+    setPurchaseItems((prev) =>
       prev.length === 1 ? prev : prev.filter((_, idx) => idx !== index)
     );
   const convertSaleCurrency = (nextCurrency: CurrencyCode) => {
@@ -2215,10 +2518,30 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <p className="farma-sub mb-3">{t.subtitle}</p>
 
                     <div className="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-4 mb-3">
-                      <Metric title={t.inventoryUnits} value={money(stats.inventoryUnits)} note={t.stockHealthy} />
-                      <Metric title={t.receivablesCard} value={`$${money(stats.receivablesBalance)}`} note={`12 ${t.overdueInvoices}`} />
-                      <Metric title={t.payablesCard} value={`$${money(stats.payablesBalance)}`} note={`5 ${t.upcomingBills}`} />
-                      <Metric title={t.expensesCard} value={`$${money(stats.expensesTotal)}`} note={t.last7days} />
+                      <Metric
+                        title={t.inventoryUnits}
+                        value={money(catalog.length)}
+                        note={`${t.registeredProducts} · ${t.clickToOpen}`}
+                        onClick={() => changeMenu('inventory')}
+                      />
+                      <Metric
+                        title={t.receivablesCard}
+                        value={`$${money(stats.receivablesBalance)}`}
+                        note={`${overdueReceivablesCount} ${t.overdueInvoices} · ${t.clickToOpen}`}
+                        onClick={() => changeMenu('receivables')}
+                      />
+                      <Metric
+                        title={t.payablesCard}
+                        value={`$${money(stats.payablesBalance)}`}
+                        note={`${upcomingPayablesCount} ${t.upcomingBills} · ${t.clickToOpen}`}
+                        onClick={() => changeMenu('payables')}
+                      />
+                      <Metric
+                        title={t.expensesCard}
+                        value={`$${money(stats.expensesTotal)}`}
+                        note={`${t.last7days} · ${t.clickToOpen}`}
+                        onClick={() => changeMenu('expenses')}
+                      />
                     </div>
 
                     <ul className="nav nav-tabs farma-tabs mb-3">
@@ -2564,18 +2887,40 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <Field label={t.taxRate} value={saleForm.taxRate} onChange={(v) => setSaleForm({ ...saleForm, taxRate: v })} />
                               </div>
                               <div className="col-12 col-lg-6">
-                                <SelectField label={t.paymentMethod} value={saleForm.paymentMethod} onChange={(v) => setSaleForm({ ...saleForm, paymentMethod: v as PaymentMethod })} options={[{ value: 'CASH', label: t.cash }, { value: 'CREDIT', label: t.credit }]} />
+                                <SelectField
+                                  label={t.paymentMethod}
+                                  value={saleForm.paymentMethod}
+                                  onChange={(v) =>
+                                    setSaleForm((prev) => ({
+                                      ...prev,
+                                      paymentMethod: v as PaymentMethod,
+                                      amountPaid:
+                                        v === 'CREDIT' && prev.paymentMethod !== 'CREDIT'
+                                          ? '0'
+                                          : prev.amountPaid
+                                    }))
+                                  }
+                                  options={[{ value: 'CASH', label: t.cash }, { value: 'CREDIT', label: t.credit }]}
+                                />
                               </div>
                               <div className="col-12 col-lg-6">
                                 {saleForm.paymentMethod === 'CREDIT' ? (
                                   <SelectField label={t.creditTerm} value={saleForm.creditTermDays} onChange={(v) => setSaleForm({ ...saleForm, creditTermDays: v as CreditTermDays })} options={[{ value: 'DAYS_15', label: t.days15 }, { value: 'DAYS_30', label: t.days30 }, { value: 'DAYS_45', label: t.days45 }, { value: 'DAYS_60', label: t.days60 }]} />
                                 ) : (
-                                  <Field label={t.amountPaid} value={saleForm.amountPaid} onChange={(v) => setSaleForm({ ...saleForm, amountPaid: v })} />
+                                  <div className="mb-2">
+                                    <label className="form-label farma-label">{t.amountPaid}</label>
+                                    <input
+                                      className="form-control form-control-sm farma-input"
+                                      value={saleForm.amountPaid}
+                                      readOnly
+                                    />
+                                    <div className="small farma-muted mt-1">{t.autoCashPaid}</div>
+                                  </div>
                                 )}
                               </div>
                               {saleForm.paymentMethod === 'CREDIT' ? (
                                 <div className="col-12 col-lg-6">
-                                  <Field label={t.amountPaid} value={saleForm.amountPaid} onChange={(v) => setSaleForm({ ...saleForm, amountPaid: v })} />
+                                  <Field label={t.downPayment} value={saleForm.amountPaid} onChange={(v) => setSaleForm({ ...saleForm, amountPaid: v })} />
                                 </div>
                               ) : null}
                               <div className="col-12 d-flex gap-2 justify-content-end">
@@ -2597,7 +2942,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                               <span>{t.total}:</span>
                               <strong>{currencySymbol(saleCurrency)}{money(saleTotalDisplay)}</strong>
                             </div>
-                            <div className="farma-summary-row"><span>{t.amountPaid}:</span><b>{currencySymbol(saleCurrency)}{money(saleAmountPaidDisplay)}</b></div>
+                            <div className="farma-summary-row"><span>{saleForm.paymentMethod === 'CREDIT' ? t.downPayment : t.amountPaid}:</span><b>{currencySymbol(saleCurrency)}{money(saleAmountPaidDisplay)}</b></div>
                             <div className="farma-summary-balance">
                               <span>Balance Due:</span>
                               <strong>{currencySymbol(saleCurrency)}{money(saleBalanceDisplay)}</strong>
@@ -2693,6 +3038,18 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                         {invoiceSection === 'open' ? (
                                           <button
                                             type="button"
+                                            className="btn btn-sm farma-btn-ghost farma-action-payment"
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              void addInvoicePayment(sale);
+                                            }}
+                                          >
+                                            {t.addPayment}
+                                          </button>
+                                        ) : null}
+                                        {invoiceSection === 'open' ? (
+                                          <button
+                                            type="button"
                                             className="btn btn-sm farma-btn-ghost farma-action-paid"
                                             onClick={(event) => {
                                               event.stopPropagation();
@@ -2727,6 +3084,9 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                   <div className="d-flex gap-1">
                                     <button type="button" className="btn btn-sm farma-btn-ghost farma-action-view" onClick={() => openViewInvoice(boardPreviewInvoice.id)}>{t.view}</button>
                                     <button type="button" className="btn btn-sm farma-btn-ghost farma-action-edit" onClick={() => startEditInvoice(boardPreviewInvoice)}>{t.edit}</button>
+                                    {invoiceSection === 'open' ? (
+                                      <button type="button" className="btn btn-sm farma-btn-ghost farma-action-payment" onClick={() => void addInvoicePayment(boardPreviewInvoice)}>{t.addPayment}</button>
+                                    ) : null}
                                     {invoiceSection === 'open' ? (
                                       <button type="button" className="btn btn-sm farma-btn-ghost farma-action-paid" onClick={() => void markInvoicePaid(boardPreviewInvoice)}>{t.markPaid}</button>
                                     ) : null}
@@ -2781,7 +3141,10 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                             <div className="d-flex gap-2">
                               <button type="button" className="btn btn-sm farma-btn-ghost" onClick={() => setInvoiceSection(invoiceViewReturnSection)}>{t.back}</button>
                               {previewInvoice && !isPaidStatus((previewInvoice as { status?: string }).status) ? (
-                                <button type="button" className="btn btn-sm farma-btn-ghost farma-action-paid" onClick={() => void markInvoicePaid(previewInvoice as { id: string; total?: string | number })}>{t.markPaid}</button>
+                                <button type="button" className="btn btn-sm farma-btn-ghost farma-action-payment" onClick={() => void addInvoicePayment(previewInvoice as { id: string; total?: string | number; amountPaid?: string | number })}>{t.addPayment}</button>
+                              ) : null}
+                              {previewInvoice && !isPaidStatus((previewInvoice as { status?: string }).status) ? (
+                                <button type="button" className="btn btn-sm farma-btn-ghost farma-action-paid" onClick={() => void markInvoicePaid(previewInvoice as { id: string; total?: string | number; amountPaid?: string | number })}>{t.markPaid}</button>
                               ) : null}
                               <button type="button" className="btn btn-sm farma-btn-ghost" onClick={downloadInvoicePdf}>{t.downloadPdf}</button>
                               <button type="button" className="btn btn-sm farma-btn-ghost" onClick={printInvoice}>{t.printInvoice}</button>
@@ -3464,63 +3827,149 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
 
                 {activeMenu === 'payables' ? (
                   <div className="row g-3">
-                    <div className="col-xl-5">
-                      <FormCard title={t.registerPurchase}>
-                        <SelectField label={t.supplier} value={purchaseForm.supplierId} onChange={(v) => setPurchaseForm({ ...purchaseForm, supplierId: v })} options={suppliers.map((s) => ({ value: s.id, label: s.name }))} />
-                        <SelectField label={t.product} value={purchaseForm.productId} onChange={(v) => setPurchaseForm({ ...purchaseForm, productId: v })} options={catalog.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))} />
-                        <Field label={t.batch} value={purchaseForm.batchNumber} onChange={(v) => setPurchaseForm({ ...purchaseForm, batchNumber: v })} />
-                        <Field label={t.quantity} value={purchaseForm.quantity} onChange={(v) => setPurchaseForm({ ...purchaseForm, quantity: v })} />
-                        <Field label={t.cost} value={purchaseForm.unitCost} onChange={(v) => setPurchaseForm({ ...purchaseForm, unitCost: v })} />
-                        <Field label={t.salePrice} value={purchaseForm.unitPrice} onChange={(v) => setPurchaseForm({ ...purchaseForm, unitPrice: v })} />
-                        <SelectField label={t.employee} value={purchaseForm.employeeId} onChange={(v) => setPurchaseForm({ ...purchaseForm, employeeId: v })} options={[{ value: '', label: '-' }, ...employees.map((e) => ({ value: e.id, label: `${e.firstName} ${e.lastName}` }))]} />
-                        <SelectField label={t.paymentMethod} value={purchaseForm.paymentMethod} onChange={(v) => setPurchaseForm({ ...purchaseForm, paymentMethod: v as PaymentMethod })} options={[{ value: 'CASH', label: t.cash }, { value: 'CREDIT', label: t.credit }]} />
-                        {purchaseForm.paymentMethod === 'CREDIT' ? <SelectField label={t.creditTerm} value={purchaseForm.creditTermDays} onChange={(v) => setPurchaseForm({ ...purchaseForm, creditTermDays: v as CreditTermDays })} options={[{ value: 'DAYS_15', label: t.days15 }, { value: 'DAYS_30', label: t.days30 }, { value: 'DAYS_45', label: t.days45 }, { value: 'DAYS_60', label: t.days60 }]} /> : null}
-                        <Field label={t.amountPaid} value={purchaseForm.amountPaid} onChange={(v) => setPurchaseForm({ ...purchaseForm, amountPaid: v })} />
-                        <button type="button" className="btn farma-btn w-100" onClick={savePurchase}>{t.savePurchase}</button>
-                      </FormCard>
-                    </div>
-                    <div className="col-xl-7">
+                    <div className="col-12 col-xl-7">
                       <TableCard
                         title={t.payables}
-                        headers={[t.supplier, t.amountPaid, t.creditTerm, 'Status']}
-                        rows={payables.map((p) => [p.supplier?.name ?? '-', `$${money(p.balance)}`, dateShort(p.dueDate), p.status ?? '-'])}
+                        headers={[t.supplier, 'Balance', t.creditTerm, t.paymentMethod, t.status]}
+                        rows={payables.map((p) => [p.supplier?.name ?? '-', `$${money(p.balance)}`, dateShort(p.dueDate), paymentMethodLabel(p.purchase?.paymentMethod), p.status ?? '-'])}
                         empty={t.noData}
                       />
                     </div>
-                    <div className="col-12">
-                      <div className="row g-3">
-                        <div className="col-12 col-xl-5">
-                          <div className="farma-card h-100">
-                            <h3 className="farma-form-title mb-2">{t.agingPayables}</h3>
-                            <div className="farma-mini-list">
-                              <div className="farma-mini-row"><span>{t.current}</span><b>C${money(payableAging.current)}</b></div>
-                              <div className="farma-mini-row"><span>{t.days1to30}</span><b>C${money(payableAging.days1to30)}</b></div>
-                              <div className="farma-mini-row"><span>{t.days31to60}</span><b>C${money(payableAging.days31to60)}</b></div>
-                              <div className="farma-mini-row"><span>{t.days61plus}</span><b>C${money(payableAging.days61plus)}</b></div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-12 col-xl-7">
-                          <TableCard
-                            title={t.topSuppliers}
-                            headers={[t.supplier, t.purchasesAmount, t.receiptsCount, 'Balance']}
-                            rows={topSuppliersReport.map((row) => [
-                              row.supplier,
-                              `C$${money(row.total)}`,
-                              String(row.receipts),
-                              `C$${money(row.balance)}`
-                            ])}
-                            empty={t.noData}
-                          />
+                    <div className="col-12 col-xl-5">
+                      <div className="farma-card h-100">
+                        <h3 className="farma-form-title mb-2">{t.agingPayables}</h3>
+                        <div className="farma-mini-list">
+                          <div className="farma-mini-row"><span>{t.current}</span><b>C${money(payableAging.current)}</b></div>
+                          <div className="farma-mini-row"><span>{t.days1to30}</span><b>C${money(payableAging.days1to30)}</b></div>
+                          <div className="farma-mini-row"><span>{t.days31to60}</span><b>C${money(payableAging.days31to60)}</b></div>
+                          <div className="farma-mini-row"><span>{t.days61plus}</span><b>C${money(payableAging.days61plus)}</b></div>
                         </div>
                       </div>
+                    </div>
+                    <div className="col-12">
+                      <TableCard
+                        title={t.topSuppliers}
+                        headers={[t.supplier, t.purchasesAmount, t.receiptsCount, 'Balance']}
+                        rows={topSuppliersReport.map((row) => [
+                          row.supplier,
+                          `C$${money(row.total)}`,
+                          String(row.receipts),
+                          `C$${money(row.balance)}`
+                        ])}
+                        empty={t.noData}
+                      />
                     </div>
                   </div>
                 ) : null}
 
                 {activeMenu === 'expenses' ? (
                   <div className="row g-3">
-                    <div className="col-xl-5">
+                    <div className="col-12 col-xl-6">
+                      <div className="farma-card h-100">
+                        <h3 className="farma-form-title mb-2">{t.registerPurchase}</h3>
+                        <div className="row g-2">
+                          <div className="col-12 col-lg-6">
+                            <SelectField label={t.supplier} value={purchaseForm.supplierId} onChange={(v) => setPurchaseForm({ ...purchaseForm, supplierId: v })} options={suppliers.map((s) => ({ value: s.id, label: s.name }))} />
+                          </div>
+                          <div className="col-12 col-lg-6">
+                            <SelectField label={t.employee} value={purchaseForm.employeeId} onChange={(v) => setPurchaseForm({ ...purchaseForm, employeeId: v })} options={[{ value: '', label: '-' }, ...employees.map((e) => ({ value: e.id, label: `${e.firstName} ${e.lastName}` }))]} />
+                          </div>
+                          <div className="col-12 col-lg-6">
+                            <SelectField
+                              label={t.paymentMethod}
+                              value={purchaseForm.paymentMethod}
+                              onChange={(v) =>
+                                setPurchaseForm((prev) => ({
+                                  ...prev,
+                                  paymentMethod: v as PaymentMethod,
+                                  amountPaid:
+                                    v === 'CREDIT' && prev.paymentMethod !== 'CREDIT'
+                                      ? '0'
+                                      : prev.amountPaid
+                                }))
+                              }
+                              options={[{ value: 'CASH', label: t.cash }, { value: 'CREDIT', label: t.credit }]}
+                            />
+                          </div>
+                          <div className="col-12 col-lg-6">
+                            {purchaseForm.paymentMethod === 'CREDIT' ? <SelectField label={t.creditTerm} value={purchaseForm.creditTermDays} onChange={(v) => setPurchaseForm({ ...purchaseForm, creditTermDays: v as CreditTermDays })} options={[{ value: 'DAYS_15', label: t.days15 }, { value: 'DAYS_30', label: t.days30 }, { value: 'DAYS_45', label: t.days45 }, { value: 'DAYS_60', label: t.days60 }]} /> : (
+                              <div className="mb-2">
+                                <label className="form-label farma-label">{t.amountPaid}</label>
+                                <input className="form-control form-control-sm farma-input" value={purchaseForm.amountPaid} readOnly />
+                                <div className="small farma-muted mt-1">{t.autoCashPaid}</div>
+                              </div>
+                            )}
+                          </div>
+                          {purchaseForm.paymentMethod === 'CREDIT' ? (
+                            <div className="col-12 col-lg-6">
+                              <Field label={t.downPayment} value={purchaseForm.amountPaid} onChange={(v) => setPurchaseForm({ ...purchaseForm, amountPaid: v })} />
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="farma-invoice-items-wrap mt-2">
+                          <div className="d-flex justify-content-between align-items-center">
+                            <h4 className="farma-form-title mb-0">{t.itemLines}</h4>
+                            <button type="button" className="btn btn-sm farma-invoice-add-btn" onClick={addPurchaseItem}>{t.addItem}</button>
+                          </div>
+                          <div className="table-responsive mt-2">
+                            <table className="table table-sm mb-0 farma-table farma-invoice-items-table">
+                              <thead>
+                                <tr>
+                                  <th>{t.product}</th>
+                                  <th>{t.batch}</th>
+                                  <th>{t.quantity}</th>
+                                  <th>{t.cost}</th>
+                                  <th>{t.salePrice}</th>
+                                  <th>{t.lineTotal}</th>
+                                  <th>{t.actions}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {purchaseItems.map((item, index) => (
+                                  <tr key={`purchase-item-${index}`}>
+                                    <td>
+                                      <select
+                                        className="form-select form-select-sm farma-input"
+                                        value={item.productId}
+                                        onChange={(e) => setPurchaseItemField(index, 'productId', e.target.value)}
+                                      >
+                                        <option value="">-</option>
+                                        {catalog.map((p) => (
+                                          <option key={p.id} value={p.id}>{`${p.name} (${p.sku})`}</option>
+                                        ))}
+                                      </select>
+                                    </td>
+                                    <td>
+                                      <input className="form-control form-control-sm farma-input" value={item.batchNumber} onChange={(e) => setPurchaseItemField(index, 'batchNumber', e.target.value)} />
+                                    </td>
+                                    <td>
+                                      <input className="form-control form-control-sm farma-input" value={item.quantity} onChange={(e) => setPurchaseItemField(index, 'quantity', e.target.value)} />
+                                    </td>
+                                    <td>
+                                      <input className="form-control form-control-sm farma-input" value={item.unitCost} onChange={(e) => setPurchaseItemField(index, 'unitCost', e.target.value)} />
+                                    </td>
+                                    <td>
+                                      <input className="form-control form-control-sm farma-input" value={item.unitPrice} onChange={(e) => setPurchaseItemField(index, 'unitPrice', e.target.value)} />
+                                    </td>
+                                    <td>C${money(n(item.quantity) * n(item.unitCost))}</td>
+                                    <td>
+                                      <button type="button" className="btn btn-sm farma-action-delete" onClick={() => removePurchaseItem(index)}>{t.remove}</button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="farma-summary-list mt-2">
+                          <div className="farma-summary-row"><span>{t.subtotal}:</span><b>C${money(purchaseSummary.subtotal)}</b></div>
+                          <div className="farma-summary-row"><span>{purchaseForm.paymentMethod === 'CREDIT' ? t.downPayment : t.amountPaid}:</span><b>C${money(purchaseAmountPaidDisplay)}</b></div>
+                          <div className="farma-summary-row"><span>Balance:</span><b>C${money(purchaseBalanceDisplay)}</b></div>
+                        </div>
+                        <button type="button" className="btn farma-btn w-100 mt-2" onClick={savePurchase}>{t.savePurchase}</button>
+                      </div>
+                    </div>
+                    <div className="col-12 col-xl-6">
                       <FormCard title={t.registerExpense}>
                         <Field label={t.category} value={expenseForm.category} onChange={(v) => setExpenseForm({ ...expenseForm, category: v })} />
                         <Field label={t.description} value={expenseForm.description} onChange={(v) => setExpenseForm({ ...expenseForm, description: v })} />
@@ -3537,21 +3986,55 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                         empty={t.noData}
                       />
                     </div>
+                    <div className="col-12">
+                      <TableCard
+                        title={`${t.registerPurchase} ${t.reports}`}
+                        headers={[t.supplier, t.total, t.amountPaid, 'Balance', t.status]}
+                        rows={purchasesHistory.map((purchase) => [
+                          purchase.supplier?.name ?? '-',
+                          `C$${money(purchase.total)}`,
+                          `C$${money(purchase.amountPaid)}`,
+                          `C$${money(purchase.balanceDue)}`,
+                          statusLabel(purchase.status)
+                        ])}
+                        empty={t.noData}
+                      />
+                    </div>
                   </div>
                 ) : null}
 
                 {activeMenu === 'reports' ? (
                   <div className="row g-3">
-                    <div className="col-12 col-xl-4">
+                    <div className="col-12 col-xl-3">
+                      <label className="form-label farma-label">{t.periodType}</label>
+                      <select
+                        className="form-select form-select-sm farma-input"
+                        value={reportMode}
+                        onChange={(e) => setReportMode(e.target.value as 'month' | 'week')}
+                      >
+                        <option value="month">{t.month}</option>
+                        <option value="week">{t.week}</option>
+                      </select>
+                    </div>
+                    <div className="col-12 col-xl-3">
                       <label className="form-label farma-label">{t.reportPeriod}</label>
                       <input
-                        type="month"
+                        type={reportMode === 'month' ? 'month' : 'week'}
                         className="form-control form-control-sm farma-input"
                         value={reportPeriod}
                         onChange={(e) => setReportPeriod(e.target.value)}
                       />
                     </div>
-                    <div className="col-12 col-xl-8 d-flex flex-wrap gap-2 align-items-end justify-content-xl-end">
+                    <div className="col-12 col-xl-3">
+                      <label className="form-label farma-label">{t.customerSearch}</label>
+                      <input
+                        className="form-control form-control-sm farma-input"
+                        value={reportCustomerQuery}
+                        onChange={(e) => setReportCustomerQuery(e.target.value)}
+                        placeholder={t.search}
+                      />
+                    </div>
+                    <div className="col-12 col-xl-3 d-flex flex-wrap gap-2 align-items-end justify-content-xl-end">
                       <button type="button" className="btn btn-sm farma-btn-ghost" onClick={refresh}>
                         {t.update}
                       </button>
@@ -3565,7 +4048,27 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <TableCard
                         title={t.reports}
                         headers={[t.productId, t.quantity, 'Total']}
-                        rows={topProducts.map((r) => [r.productId, money(r._sum?.quantity), `$${money(r._sum?.lineTotal)}`])}
+                        rows={periodTopProductsRows.map((row) => [
+                          row.productId,
+                          money(row.quantity),
+                          `$${money(row.total)}`
+                        ])}
+                        empty={t.noData}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <TableCard
+                        title={`${t.customers} / ${t.invoices}`}
+                        headers={[t.customer, t.invoiceNo, 'Date', t.paymentMethod, t.total, 'Balance', t.status]}
+                        rows={periodCustomerInvoicesRows.map((row) => [
+                          row.customer,
+                          row.invoice,
+                          row.date,
+                          row.paymentMethod,
+                          `C$${money(row.total)}`,
+                          `C$${money(row.balance)}`,
+                          row.status
+                        ])}
                         empty={t.noData}
                       />
                     </div>
@@ -3791,14 +4294,28 @@ function Sidebar({
   );
 }
 
-function Metric({ title, value, note }: { title: string; value: string; note: string }) {
+function Metric({
+  title,
+  value,
+  note,
+  onClick
+}: {
+  title: string;
+  value: string;
+  note: string;
+  onClick?: () => void;
+}) {
   return (
     <div className="col">
-      <div className="farma-card h-100">
+      <button
+        type="button"
+        className={`farma-card h-100 text-start w-100 ${onClick ? 'farma-card-clickable' : ''}`}
+        onClick={onClick}
+      >
         <div className="farma-card-title">{title}</div>
         <div className="farma-card-value">{value}</div>
         <div className="farma-card-note">{note}</div>
-      </div>
+      </button>
     </div>
   );
 }

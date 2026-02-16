@@ -15,6 +15,21 @@ Notes:
 - API container auto-runs `prisma db push` on startup.
 - Mobile app is run with Expo tooling, not Docker.
 
+## Windows Easy Run (No Docker)
+Use this mode when Docker/WSL is not available.
+
+Prerequisites:
+- Node.js + npm installed.
+- PostgreSQL installed and running on `localhost:5432`.
+- PostgreSQL app user: `root`
+- PostgreSQL app password: `1234qwer`
+- Database name: `farma`
+
+Double-click scripts in project root:
+1. `start-farma.bat` -> installs deps (first time), pushes Prisma schema, starts API + Web.
+2. `seed-farma.bat` -> loads sample data (run after API is up).
+3. `stop-farma.bat` -> stops API/Web windows started by the scripts.
+
 ## Single-Business Mode
 This project now runs in single-business mode.
 - Frontend does not ask for tenant/company selection.
