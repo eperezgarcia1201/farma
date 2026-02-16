@@ -1,0 +1,1300 @@
+:root.theme-dark {
+  --bg: radial-gradient(1200px 620px at 58% 8%, #1f4561 0%, #0b1730 44%, #060f22 100%);
+  --shell: rgba(9, 18, 37, 0.72);
+  --panel: rgba(12, 22, 43, 0.78);
+  --card: rgba(11, 23, 47, 0.84);
+  --line: rgba(130, 170, 201, 0.22);
+  --text: #e9f2ff;
+  --muted: #a7bbd0;
+  --accent: #59d1ca;
+  --btn-text: #10283a;
+  --table-text: #f3f8ff;
+  --table-head: #f8fbff;
+  --table-bg: linear-gradient(180deg, rgba(19, 33, 62, 0.45), rgba(12, 22, 43, 0.32));
+}
+
+:root.theme-light {
+  --bg:
+    radial-gradient(1200px 620px at 0% -10%, #f2f7ff 0%, rgba(242, 247, 255, 0) 62%),
+    radial-gradient(1100px 520px at 100% 12%, #deebff 0%, rgba(222, 235, 255, 0) 58%),
+    linear-gradient(160deg, #edf3fb 0%, #e4edf8 44%, #dae6f3 100%);
+  --shell: rgba(255, 255, 255, 0.86);
+  --panel: rgba(253, 255, 255, 0.92);
+  --card: rgba(255, 255, 255, 0.97);
+  --line: rgba(74, 104, 132, 0.2);
+  --text: #16243a;
+  --muted: #5b6f84;
+  --accent: #2f9fc4;
+  --btn-text: #0c2233;
+  --table-text: #18263b;
+  --table-head: #10233a;
+  --table-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(242, 248, 255, 0.97));
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.farma-app {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.farma-sidebar {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+}
+
+.farma-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #40ddd0, #3270c7);
+  box-shadow: 0 10px 18px rgba(53, 154, 211, 0.3);
+}
+
+.farma-menu-item {
+  border: 0;
+  width: 100%;
+  text-align: left;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.62rem 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 140ms ease;
+}
+
+.farma-menu-item:hover {
+  background: rgba(94, 174, 210, 0.16);
+  color: var(--text);
+  transform: translateX(2px);
+}
+
+.farma-menu-item.active {
+  background: linear-gradient(90deg, rgba(74, 178, 188, 0.42), rgba(56, 114, 151, 0.28));
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(106, 213, 210, 0.22);
+}
+
+.farma-menu-subitem {
+  border: 0;
+  width: calc(100% - 0.75rem);
+  margin-left: 0.75rem;
+  text-align: left;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+  padding: 0.45rem 0.72rem;
+}
+
+.farma-menu-subitem:hover {
+  background: rgba(94, 174, 210, 0.12);
+  color: var(--text);
+}
+
+.farma-menu-subitem.active {
+  background: rgba(74, 178, 188, 0.3);
+  color: var(--text);
+}
+
+.farma-menu-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(71, 151, 188, 0.24);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: #90e3dc;
+}
+
+.farma-shell,
+.farma-topbar,
+.farma-content,
+.farma-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.farma-shell {
+  background: var(--shell);
+}
+
+.farma-topbar {
+  background: linear-gradient(90deg, rgba(33, 63, 88, 0.36), rgba(33, 63, 88, 0.14));
+}
+
+.farma-top-actions {
+  align-items: center;
+}
+
+.farma-top-select {
+  min-width: 118px;
+  border-radius: 11px;
+}
+
+.farma-content {
+  background:
+    radial-gradient(1000px 420px at 62% -10%, rgba(64, 162, 184, 0.16), rgba(18, 35, 67, 0) 55%),
+    linear-gradient(145deg, rgba(11, 24, 48, 0.84), rgba(8, 18, 38, 0.72));
+}
+
+.farma-title {
+  font-size: clamp(1.6rem, 2.1vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.farma-hero {
+  font-size: clamp(1.4rem, 1.9vw, 2.4rem);
+  font-weight: 700;
+}
+
+.farma-sub {
+  color: var(--muted);
+  font-size: 1.03rem;
+}
+
+.farma-section-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.farma-search {
+  max-width: 300px;
+}
+
+.farma-search .input-group-text,
+.farma-search .form-control,
+.farma-select,
+.farma-btn-ghost {
+  border-color: var(--line);
+  background: rgba(10, 20, 40, 0.45);
+  color: var(--text);
+}
+
+.farma-search .form-control::placeholder {
+  color: var(--muted);
+}
+
+.farma-select {
+  width: 112px;
+}
+
+.farma-btn-ghost {
+  min-width: 72px;
+}
+
+.farma-top-actions .farma-top-select {
+  width: auto;
+  min-width: 118px;
+}
+
+.farma-top-actions .farma-btn-ghost.farma-top-btn {
+  min-height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(121, 169, 204, 0.42);
+  background: linear-gradient(180deg, rgba(31, 58, 94, 0.56), rgba(18, 38, 67, 0.42));
+  color: #e3efff;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(218, 233, 255, 0.08);
+}
+
+.farma-top-actions .farma-btn-ghost.farma-top-btn:hover {
+  border-color: rgba(130, 196, 220, 0.56);
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(36, 70, 113, 0.68), rgba(22, 45, 81, 0.5));
+  transform: translateY(-1px);
+}
+
+.farma-top-actions .farma-btn-ghost.farma-top-btn.farma-top-btn-danger {
+  border-color: rgba(222, 125, 136, 0.48);
+  background: linear-gradient(180deg, rgba(156, 62, 78, 0.5), rgba(112, 40, 55, 0.4));
+}
+
+.farma-tabs {
+  border-bottom-color: var(--line);
+}
+
+.farma-tabs .nav-link {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  padding: 0.4rem 0.6rem 0.55rem;
+}
+
+.farma-tabs .nav-link.active {
+  background: transparent;
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.farma-card {
+  background: var(--card);
+  padding: 0.9rem;
+}
+
+.farma-edit-shell {
+  background:
+    radial-gradient(900px 380px at 80% -20%, rgba(74, 184, 206, 0.2), rgba(10, 20, 42, 0) 56%),
+    linear-gradient(155deg, rgba(14, 29, 58, 0.88), rgba(9, 20, 40, 0.78));
+  border-color: rgba(126, 181, 220, 0.35);
+}
+
+.farma-edit-grid {
+  border-top: 1px solid var(--line);
+  padding-top: 0.75rem;
+}
+
+.farma-edit-summary {
+  min-height: 35px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.44rem 0.7rem;
+  background: rgba(16, 34, 66, 0.46);
+  color: #f3f8ff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-weight: 700;
+}
+
+.farma-card-title {
+  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.farma-card-value {
+  font-size: clamp(1.9rem, 2.2vw, 2.8rem);
+  line-height: 1;
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.farma-card-note {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+.farma-form-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.farma-label {
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.farma-input {
+  background: rgba(7, 15, 34, 0.5);
+  border-color: var(--line);
+  color: var(--text);
+  min-height: 35px;
+}
+
+.farma-input:focus {
+  background: rgba(7, 15, 34, 0.62);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.farma-autocomplete-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 2px);
+  z-index: 30;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: 0 12px 22px rgba(8, 18, 34, 0.35);
+}
+
+.farma-autocomplete-item {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.farma-autocomplete-item:hover {
+  background: rgba(90, 170, 207, 0.18);
+}
+
+.farma-autocomplete-item small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.farma-autocomplete-empty {
+  padding: 0.52rem 0.65rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.farma-btn {
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #56c4bc, #4aab9d);
+  color: var(--btn-text);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 0.35rem;
+  padding-top: 0.48rem;
+  padding-bottom: 0.48rem;
+}
+
+.farma-invoice-new-btn {
+  border: 1px solid rgba(125, 224, 210, 0.48);
+  border-radius: 11px;
+  min-width: 130px;
+  min-height: 39px;
+  background: linear-gradient(90deg, #77d3cc, #67c6b6);
+  color: #0d2a35;
+  font-weight: 700;
+  box-shadow: 0 6px 14px rgba(65, 169, 164, 0.28);
+}
+
+.farma-invoice-new-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.farma-invoice-form-card {
+  background: linear-gradient(145deg, rgba(253, 254, 255, 0.98), rgba(241, 245, 251, 0.96));
+  border-color: rgba(122, 157, 194, 0.28);
+  color: #1a2b3f;
+  padding: 1.1rem;
+}
+
+.farma-invoice-form-card .farma-invoice-form-title,
+.farma-invoice-form-card .farma-form-title,
+.farma-invoice-form-card .farma-label,
+.farma-invoice-form-card .small,
+.farma-invoice-form-card b,
+.farma-invoice-form-card span {
+  color: #1b2c40;
+}
+
+.farma-invoice-form-card .farma-input,
+.farma-invoice-form-card .form-select,
+.farma-invoice-form-card .form-control {
+  background: #ffffff;
+  color: #1b2c40;
+  border-color: rgba(115, 136, 170, 0.35);
+}
+
+.farma-invoice-form-card .farma-input:focus,
+.farma-invoice-form-card .form-select:focus,
+.farma-invoice-form-card .form-control:focus {
+  background: #ffffff;
+  color: #14273c;
+  border-color: rgba(66, 166, 176, 0.6);
+}
+
+.farma-invoice-form-card .farma-autocomplete-menu {
+  background: #ffffff;
+  border-color: rgba(115, 136, 170, 0.35);
+  box-shadow: 0 12px 18px rgba(27, 44, 64, 0.18);
+}
+
+.farma-invoice-form-card .farma-autocomplete-item {
+  color: #1b2c40;
+}
+
+.farma-invoice-form-card .farma-autocomplete-item small,
+.farma-invoice-form-card .farma-autocomplete-empty {
+  color: #60718a;
+}
+
+.farma-invoice-form-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.85rem;
+}
+
+.farma-invoice-head-controls {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.farma-invoice-head-chip {
+  border: 1px solid rgba(118, 139, 169, 0.35);
+  border-radius: 999px;
+  padding: 0.34rem 0.72rem;
+  background: rgba(232, 238, 247, 0.8);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  font-size: 0.84rem;
+}
+
+.farma-rate-pill {
+  border: 1px solid rgba(125, 150, 181, 0.35);
+  background: rgba(238, 243, 251, 0.92);
+  border-radius: 10px;
+  padding: 0.4rem 0.65rem;
+  color: #24364b;
+}
+
+.farma-invoice-items-wrap {
+  border: 1px solid rgba(126, 153, 188, 0.42);
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: linear-gradient(180deg, rgba(220, 232, 249, 0.96), rgba(209, 223, 243, 0.96));
+}
+
+.farma-invoice-items-table th {
+  color: #f7fbff !important;
+  background: rgba(136, 150, 174, 0.94) !important;
+  border-color: rgba(155, 178, 208, 0.78) !important;
+}
+
+.farma-invoice-items-table td {
+  color: #1f3147 !important;
+  background: rgba(235, 243, 254, 0.74) !important;
+  border-color: rgba(171, 191, 216, 0.65) !important;
+}
+
+.farma-invoice-add-btn {
+  border: 1px solid #295ecf;
+  border-radius: 10px;
+  background: #3478f6;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(52, 120, 246, 0.28);
+}
+
+.farma-invoice-add-btn:hover {
+  background: #2368eb;
+  border-color: #1f59c9;
+  color: #ffffff;
+}
+
+.farma-invoice-add-btn:active {
+  background: #1c57cb;
+  border-color: #174aa9;
+  color: #ffffff;
+}
+
+.farma-invoice-totals-card {
+  background:
+    radial-gradient(620px 280px at 15% -10%, rgba(130, 174, 217, 0.25), rgba(24, 41, 72, 0) 60%),
+    linear-gradient(170deg, rgba(26, 42, 73, 0.88), rgba(13, 26, 52, 0.84));
+  border-color: rgba(128, 161, 201, 0.3);
+  color: #eaf4ff;
+  padding: 1.1rem;
+}
+
+.farma-summary-list {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 0.7rem 0;
+  margin-bottom: 0.7rem;
+}
+
+.farma-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  color: #d4e3f5;
+}
+
+.farma-summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.farma-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.04rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.farma-summary-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin: 0.35rem 0 0.9rem;
+}
+
+.farma-summary-balance strong {
+  color: #71d7c5;
+}
+
+.farma-create-invoice-main {
+  min-height: 47px;
+  font-size: 1.05rem;
+}
+
+.farma-table {
+  color: var(--table-text);
+  background: var(--table-bg);
+  --bs-table-color: var(--table-text);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--line);
+  --bs-table-striped-color: var(--table-text);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+  --bs-table-hover-color: var(--table-text);
+  --bs-table-hover-bg: rgba(74, 131, 168, 0.12);
+}
+
+.farma-table th,
+.farma-table td {
+  border-color: var(--line);
+  white-space: nowrap;
+  padding: 0.58rem 0.75rem;
+  color: var(--table-text) !important;
+  background-color: transparent !important;
+}
+
+.farma-table th {
+  color: var(--table-head);
+  font-weight: 700;
+}
+
+.farma-table tbody tr:hover {
+  background: rgba(74, 131, 168, 0.12);
+}
+
+.farma-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+:root.theme-light .farma-table tbody tr:nth-child(odd) {
+  background: rgba(24, 62, 96, 0.03);
+}
+
+:root.theme-light .farma-table {
+  --bs-table-color: #14263c;
+  --bs-table-striped-color: #14263c;
+  --bs-table-hover-color: #14263c;
+  --bs-table-striped-bg: rgba(30, 68, 104, 0.05);
+  --bs-table-hover-bg: rgba(30, 68, 104, 0.09);
+}
+
+:root.theme-light .farma-shell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(246, 251, 255, 0.82));
+  box-shadow:
+    0 22px 44px rgba(55, 84, 121, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+:root.theme-light .farma-sidebar {
+  background: linear-gradient(180deg, rgba(251, 254, 255, 0.96), rgba(240, 246, 254, 0.94));
+  border-color: rgba(105, 132, 162, 0.25);
+  box-shadow: 0 16px 28px rgba(53, 82, 118, 0.09);
+}
+
+:root.theme-light .farma-logo {
+  box-shadow: 0 10px 22px rgba(52, 123, 183, 0.22);
+}
+
+:root.theme-light .farma-menu-icon {
+  background: linear-gradient(180deg, rgba(71, 165, 188, 0.2), rgba(69, 131, 187, 0.18));
+  color: #376e9b;
+}
+
+:root.theme-light .farma-menu-item {
+  color: #405b7a;
+}
+
+:root.theme-light .farma-menu-item:hover {
+  background: linear-gradient(90deg, rgba(150, 190, 233, 0.2), rgba(170, 212, 243, 0.14));
+  color: #17314f;
+}
+
+:root.theme-light .farma-menu-item.active {
+  background: linear-gradient(90deg, rgba(132, 176, 222, 0.36), rgba(167, 204, 238, 0.22));
+  color: #122f50;
+  box-shadow:
+    inset 0 0 0 1px rgba(108, 149, 196, 0.35),
+    0 8px 14px rgba(70, 106, 149, 0.15);
+}
+
+:root.theme-light .farma-menu-subitem {
+  color: #4f6882;
+}
+
+:root.theme-light .farma-menu-subitem:hover {
+  background: rgba(146, 189, 230, 0.18);
+  color: #153250;
+}
+
+:root.theme-light .farma-menu-subitem.active {
+  background: linear-gradient(90deg, rgba(126, 199, 205, 0.35), rgba(135, 181, 219, 0.26));
+  color: #12344e;
+}
+
+:root.theme-light .farma-topbar {
+  background: linear-gradient(90deg, rgba(246, 251, 255, 0.88), rgba(226, 237, 251, 0.7));
+  border-color: rgba(105, 131, 160, 0.25);
+  box-shadow: 0 14px 24px rgba(67, 102, 143, 0.1);
+}
+
+:root.theme-light .farma-content {
+  background:
+    radial-gradient(860px 340px at 12% 0%, rgba(172, 214, 248, 0.28), rgba(172, 214, 248, 0) 62%),
+    radial-gradient(920px 420px at 90% 10%, rgba(184, 205, 242, 0.24), rgba(184, 205, 242, 0) 60%),
+    linear-gradient(155deg, rgba(250, 253, 255, 0.9), rgba(236, 244, 253, 0.84));
+  border-color: rgba(108, 135, 167, 0.24);
+}
+
+:root.theme-light .farma-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 249, 255, 0.95));
+  border-color: rgba(107, 135, 167, 0.22);
+  box-shadow:
+    0 12px 22px rgba(62, 94, 130, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+:root.theme-light .farma-card-title {
+  color: #29425f;
+}
+
+:root.theme-light .farma-card-note {
+  color: #5b728d;
+}
+
+:root.theme-light .farma-table-toolbar {
+  background: linear-gradient(90deg, rgba(237, 246, 255, 0.82), rgba(221, 235, 250, 0.66));
+  border-bottom-color: rgba(108, 135, 166, 0.24);
+}
+
+:root.theme-light .farma-invoice-toolbar-card,
+:root.theme-light .farma-invoice-list-card,
+:root.theme-light .farma-invoice-recent-panel,
+:root.theme-light .farma-invoice-summary-panel {
+  background:
+    radial-gradient(760px 250px at 60% -25%, rgba(157, 202, 245, 0.26), rgba(157, 202, 245, 0) 60%),
+    linear-gradient(165deg, rgba(242, 249, 255, 0.94), rgba(229, 240, 251, 0.88));
+  border-color: rgba(108, 140, 176, 0.28);
+}
+
+:root.theme-light .farma-invoice-feed-card {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.94), rgba(236, 246, 255, 0.9));
+  border-color: rgba(110, 148, 189, 0.26);
+  color: #163252;
+}
+
+:root.theme-light .farma-invoice-feed-card:hover {
+  border-color: rgba(92, 148, 198, 0.45);
+  box-shadow: 0 10px 18px rgba(62, 101, 146, 0.14);
+}
+
+:root.theme-light .farma-invoice-feed-card.active {
+  background: linear-gradient(165deg, rgba(230, 245, 255, 0.95), rgba(222, 238, 252, 0.9));
+  border-color: rgba(92, 166, 196, 0.48);
+}
+
+:root.theme-light .farma-invoice-feed-meta {
+  color: #4c6785;
+}
+
+:root.theme-light .farma-invoice-feed-foot strong {
+  color: #1d3d61;
+}
+
+:root.theme-light .farma-invoice-feed-foot span {
+  color: #607b98;
+}
+
+:root.theme-light .farma-status-filter-btn {
+  background: rgba(236, 246, 255, 0.86);
+  color: #41627f;
+  border-color: rgba(109, 146, 184, 0.32);
+}
+
+:root.theme-light .farma-status-filter-btn.active {
+  background: linear-gradient(90deg, rgba(109, 180, 194, 0.45), rgba(117, 163, 204, 0.34));
+  color: #12344d;
+  border-color: rgba(88, 149, 176, 0.45);
+}
+
+:root.theme-light .farma-tabs .nav-link.active {
+  border-bottom-color: #329fc0;
+  color: #1a3f5f;
+}
+
+:root.theme-light .farma-btn {
+  background: linear-gradient(90deg, #5ec0c6, #4a9fb5);
+  color: #ffffff;
+  box-shadow: 0 10px 16px rgba(77, 141, 172, 0.22);
+}
+
+:root.theme-light .farma-btn:hover {
+  filter: brightness(1.06);
+}
+
+:root.theme-light .farma-btn-ghost {
+  border-color: rgba(113, 142, 171, 0.35);
+  background: linear-gradient(180deg, rgba(248, 252, 255, 0.88), rgba(234, 243, 253, 0.82));
+  color: #24405f;
+}
+
+:root.theme-light .farma-top-actions .farma-btn-ghost.farma-top-btn {
+  border-color: rgba(97, 129, 161, 0.38);
+  background: linear-gradient(180deg, rgba(243, 250, 255, 0.92), rgba(224, 238, 251, 0.9));
+  color: #1d3b5e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+:root.theme-light .farma-top-actions .farma-btn-ghost.farma-top-btn:hover {
+  background: linear-gradient(180deg, rgba(231, 243, 255, 0.96), rgba(212, 229, 246, 0.94));
+}
+
+:root.theme-light .farma-top-actions .farma-btn-ghost.farma-top-btn.farma-top-btn-danger {
+  border-color: #b54651;
+  background: linear-gradient(180deg, #d94f5d, #c13a49);
+  color: #ffffff;
+}
+
+:root.theme-light .farma-invoice-new-btn {
+  border-color: rgba(96, 168, 174, 0.54);
+  background: linear-gradient(90deg, #7ad6cf, #66c4ba);
+  color: #103448;
+}
+
+:root.theme-light .farma-invoice-section-btn {
+  background: linear-gradient(180deg, rgba(242, 250, 255, 0.88), rgba(230, 241, 252, 0.82));
+  border-color: rgba(111, 145, 179, 0.32);
+  color: #4a6582;
+}
+
+:root.theme-light .farma-invoice-section-btn.active {
+  background: linear-gradient(90deg, rgba(122, 193, 202, 0.42), rgba(132, 174, 214, 0.31));
+  border-color: rgba(89, 150, 176, 0.45);
+  color: #163c57;
+}
+
+:root.theme-light .farma-mini-list {
+  border-color: rgba(111, 141, 172, 0.24);
+}
+
+:root.theme-light .farma-mini-row {
+  border-color: rgba(111, 141, 172, 0.2);
+}
+
+.farma-table-toolbar {
+  border-bottom: 1px solid var(--line);
+  padding: 0.8rem 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: linear-gradient(90deg, rgba(34, 52, 82, 0.48), rgba(34, 52, 82, 0.14));
+  color: var(--table-head);
+}
+
+.farma-invoice-toolbar-card,
+.farma-invoice-list-card {
+  background:
+    radial-gradient(820px 300px at 40% -20%, rgba(92, 149, 201, 0.2), rgba(15, 29, 57, 0) 60%),
+    linear-gradient(170deg, rgba(13, 26, 52, 0.92), rgba(10, 21, 42, 0.9));
+  border-color: rgba(111, 148, 188, 0.28);
+}
+
+.farma-invoice-list-card .farma-table {
+  --table-text: #deebfa;
+  --table-head: #f6fbff;
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.045);
+  --bs-table-hover-bg: rgba(92, 149, 201, 0.2);
+}
+
+.farma-invoice-board {
+  position: relative;
+}
+
+.farma-invoice-board::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(160, 196, 245, 0.18) 0 1px, transparent 2px),
+    radial-gradient(circle at 68% 34%, rgba(132, 179, 240, 0.12) 0 1px, transparent 2px),
+    radial-gradient(circle at 84% 78%, rgba(147, 214, 235, 0.16) 0 1px, transparent 2px);
+  background-size: 180px 180px, 220px 220px, 260px 260px;
+  opacity: 0.75;
+}
+
+.farma-invoice-recent-panel,
+.farma-invoice-summary-panel {
+  background:
+    radial-gradient(760px 260px at 55% -20%, rgba(106, 161, 221, 0.2), rgba(13, 27, 56, 0) 60%),
+    linear-gradient(165deg, rgba(12, 24, 49, 0.94), rgba(8, 18, 39, 0.92));
+  border-color: rgba(108, 151, 194, 0.32);
+}
+
+.farma-invoice-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.farma-status-filter-btn {
+  border: 1px solid rgba(118, 156, 197, 0.34);
+  border-radius: 999px;
+  background: rgba(14, 28, 53, 0.6);
+  color: #b7cde4;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.3rem 0.68rem;
+}
+
+.farma-status-filter-btn.active {
+  border-color: rgba(103, 219, 210, 0.52);
+  color: #e8fcff;
+  background: linear-gradient(90deg, rgba(68, 173, 175, 0.54), rgba(48, 115, 153, 0.42));
+}
+
+.farma-invoice-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.farma-invoice-feed-card {
+  border: 1px solid rgba(117, 153, 191, 0.3);
+  border-radius: 13px;
+  background: linear-gradient(160deg, rgba(24, 42, 71, 0.86), rgba(16, 31, 56, 0.8));
+  padding: 0.7rem 0.72rem;
+  color: #e7f2ff;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.farma-invoice-feed-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(121, 191, 234, 0.46);
+  box-shadow: 0 8px 16px rgba(8, 19, 38, 0.28);
+}
+
+.farma-invoice-feed-card.active {
+  border-color: rgba(103, 219, 210, 0.56);
+  background: linear-gradient(160deg, rgba(31, 58, 92, 0.9), rgba(18, 39, 67, 0.84));
+  box-shadow: inset 0 0 0 1px rgba(101, 211, 208, 0.2);
+}
+
+.farma-invoice-feed-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-bottom: 0.3rem;
+}
+
+.farma-invoice-feed-head strong {
+  font-size: 0.95rem;
+}
+
+.farma-invoice-feed-meta {
+  color: #b1c5dd;
+  font-size: 0.83rem;
+  line-height: 1.28;
+}
+
+.farma-invoice-feed-method {
+  margin-top: 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid rgba(118, 164, 209, 0.34);
+  border-radius: 999px;
+  padding: 0.14rem 0.55rem;
+  background: rgba(17, 34, 62, 0.54);
+  color: #b7cde5;
+  font-size: 0.76rem;
+}
+
+.farma-invoice-feed-method strong {
+  color: #ecf6ff;
+  font-weight: 700;
+}
+
+.farma-invoice-feed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem;
+}
+
+.farma-invoice-feed-actions .btn {
+  font-size: 0.73rem;
+  padding: 0.24rem 0.5rem;
+}
+
+.farma-invoice-feed-foot {
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.farma-invoice-feed-foot strong {
+  font-size: 0.96rem;
+  color: #f3f8ff;
+}
+
+.farma-invoice-feed-foot span {
+  color: #95abc5;
+  font-size: 0.78rem;
+}
+
+.farma-board-preview {
+  background: linear-gradient(165deg, rgba(8, 20, 41, 0.64), rgba(5, 14, 32, 0.64));
+}
+
+.farma-invoice-sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.farma-invoice-section-btn {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(14, 26, 50, 0.56);
+  color: var(--muted);
+  font-size: 0.84rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.farma-invoice-section-btn.active {
+  color: var(--text);
+  border-color: rgba(111, 214, 208, 0.45);
+  background: linear-gradient(90deg, rgba(69, 172, 173, 0.38), rgba(49, 120, 154, 0.32));
+}
+
+.farma-status-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.16rem 0.55rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.farma-status-paid {
+  background: rgba(98, 205, 170, 0.24);
+  color: #85ebc7;
+  border: 1px solid rgba(98, 205, 170, 0.42);
+}
+
+.farma-status-open {
+  background: rgba(122, 191, 246, 0.21);
+  color: #9ed8ff;
+  border: 1px solid rgba(122, 191, 246, 0.42);
+}
+
+.farma-status-partial {
+  background: rgba(233, 182, 105, 0.24);
+  color: #f7d19a;
+  border: 1px solid rgba(233, 182, 105, 0.42);
+}
+
+.farma-status-overdue {
+  background: rgba(240, 123, 123, 0.22);
+  color: #ffb2b2;
+  border: 1px solid rgba(240, 123, 123, 0.4);
+}
+
+.farma-status-default {
+  background: rgba(165, 183, 205, 0.18);
+  color: #c6d5e8;
+  border: 1px solid rgba(165, 183, 205, 0.35);
+}
+
+.farma-mini-list {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.farma-mini-row {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  color: var(--text);
+  font-size: 0.93rem;
+}
+
+.farma-mini-row:last-child {
+  border-bottom: 0;
+}
+
+.farma-history-btn {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.92rem;
+}
+
+.farma-history-btn.active {
+  background: rgba(84, 172, 208, 0.2);
+}
+
+.farma-history-btn:last-child {
+  border-bottom: 0;
+}
+
+.farma-action-view {
+  border: 1px solid rgba(120, 213, 224, 0.5);
+  background: linear-gradient(180deg, rgba(74, 136, 185, 0.45), rgba(48, 90, 146, 0.32));
+  color: #ffffff;
+}
+
+.farma-action-edit {
+  border: 1px solid rgba(249, 198, 106, 0.5);
+  background: linear-gradient(180deg, rgba(204, 145, 53, 0.45), rgba(152, 108, 39, 0.34));
+  color: #ffffff;
+}
+
+.farma-action-paid {
+  border: 1px solid rgba(86, 224, 172, 0.74);
+  background: linear-gradient(180deg, rgba(56, 186, 132, 0.96), rgba(40, 151, 105, 0.94));
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.farma-action-delete {
+  border: 1px solid #b9323f;
+  background: #d34552;
+  color: #ffffff;
+}
+
+.farma-action-delete:hover {
+  background: #be3140;
+  border-color: #a72a37;
+}
+
+.farma-action-view:hover,
+.farma-action-edit:hover,
+.farma-action-paid:hover,
+.farma-action-delete:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.farma-action-view:disabled,
+.farma-action-edit:disabled,
+.farma-action-paid:disabled,
+.farma-action-delete:disabled {
+  opacity: 0.55;
+}
+
+.farma-invoice {
+  position: relative;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: rgba(8, 18, 36, 0.35);
+  overflow: hidden;
+}
+
+.farma-paid-watermark {
+  position: absolute;
+  top: 16px;
+  right: -26px;
+  transform: rotate(25deg);
+  border: 2px solid rgba(255, 95, 116, 0.88);
+  color: rgba(255, 95, 116, 0.9);
+  background: rgba(74, 14, 25, 0.32);
+  border-radius: 999px;
+  padding: 0.2rem 2.3rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
+.farma-item-row {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.55rem;
+  background: rgba(9, 19, 38, 0.28);
+}
+
+.farma-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 10, 25, 0.6);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.farma-modal-card {
+  width: min(100%, 760px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  padding: 1rem;
+}
+
+.farma-modal-sm {
+  width: min(100%, 440px);
+}
+
+.farma-muted {
+  color: var(--muted);
+}
+
+.farma-login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: var(--bg);
+}
+
+.farma-login-card {
+  width: min(100%, 420px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  padding: 1.4rem;
+  backdrop-filter: blur(10px);
+}
+
+.farma-login-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  margin-bottom: 0.7rem;
+  background: linear-gradient(135deg, #40ddd0, #3270c7);
+  box-shadow: 0 10px 20px rgba(51, 123, 205, 0.35);
+}
+
+.farma-login-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.farma-login-sub {
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+
+.farma-login-error {
+  border: 1px solid rgba(255, 99, 120, 0.35);
+  border-radius: 10px;
+  color: #ff9eb0;
+  background: rgba(100, 19, 31, 0.28);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.92rem;
+}
+
+.farma-login-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.farma-backdrop {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(3, 10, 24, 0.55);
+  z-index: 1040;
+}
+
+.farma-mobile-menu {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(82vw, 340px);
+  padding: 0.75rem;
+  transform: translateX(-102%);
+  transition: transform 180ms ease;
+  z-index: 1050;
+}
+
+.farma-mobile-menu.open {
+  transform: translateX(0);
+}
+
+@media (max-width: 1199px) {
+  .farma-search {
+    max-width: 260px;
+  }
+}
+
+@media (max-width: 991px) {
+  .farma-shell,
+  .farma-topbar,
+  .farma-content,
+  .farma-sidebar,
+  .farma-card {
+    border-radius: 12px;
+  }
+
+  .farma-sub {
+    font-size: 0.98rem;
+  }
+
+  .farma-search {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .farma-select,
+  .farma-btn-ghost {
+    width: auto;
+  }
+
+  .farma-invoice-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

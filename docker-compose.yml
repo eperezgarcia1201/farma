@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: farma
+      POSTGRES_PASSWORD: farma
+      POSTGRES_DB: farma
+    ports:
+      - "55432:5432"
+    volumes:
+      - farma_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farma -d farma"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://farma:farma@db:5432/farma
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "14000:4000"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    environment:
+      FARMA_API_URL: http://api:4000/api
+      NEXT_PUBLIC_API_URL: /api-proxy
+    depends_on:
+      - api
+    ports:
+      - "13000:3000"
+
+volumes:
+  farma_db_data:
