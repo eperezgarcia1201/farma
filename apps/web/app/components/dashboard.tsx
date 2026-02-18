@@ -150,6 +150,7 @@ type EditInvoiceItem = {
 type PurchaseItemForm = {
   productId: string;
   batchNumber: string;
+  expirationDate: string;
   quantity: string;
   unitCost: string;
   unitPrice: string;
@@ -275,6 +276,10 @@ const text: Record<Lang, Dict> = {
     days30: '30 days',
     days45: '45 days',
     days60: '60 days',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    expirationDate: 'Expiration Date',
+    receivedDate: 'Start Date',
     amountPaid: 'Amount Paid',
     downPayment: 'Down Payment / Advance',
     autoCashPaid: 'Auto paid for cash invoice',
@@ -450,6 +455,10 @@ const text: Record<Lang, Dict> = {
     days30: '30 dias',
     days45: '45 dias',
     days60: '60 dias',
+    startDate: 'Fecha Inicio',
+    endDate: 'Fecha Fin',
+    expirationDate: 'Fecha Vencimiento',
+    receivedDate: 'Fecha Inicio',
     amountPaid: 'Monto Pagado',
     downPayment: 'Anticipo / Abono',
     autoCashPaid: 'Pagado automatico para factura de contado',
@@ -626,9 +635,23 @@ const getIsoWeekValue = (value: Date | string | undefined) => {
 
 const todayMonthValue = () => new Date().toISOString().slice(0, 7);
 const todayWeekValue = () => getIsoWeekValue(new Date());
+const todayDateValue = () => new Date().toISOString().slice(0, 10);
+const datePlusDaysValue = (days: number) => {
+  const next = new Date();
+  next.setDate(next.getDate() + days);
+  return next.toISOString().slice(0, 10);
+};
 
 const n = (v: string) => {
-  const parsed = Number(v);
+  const normalized = v.trim();
+  if (!normalized) return 0;
+
+  let parsed = Number(normalized);
+  if (!Number.isFinite(parsed) && normalized.includes(',')) {
+    parsed = normalized.includes('.')
+      ? Number(normalized.replaceAll(',', ''))
+      : Number(normalized.replace(',', '.'));
+  }
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
@@ -733,7 +756,22 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [lastSale, setLastSale] = useState<SaleCreated | null>(null);
 
   const [productForm, setProductForm] = useState({ sku: '', name: '', unit: 'box', reorderPoint: '10' });
-  const [lotForm, setLotForm] = useState({ productId: '', batchNumber: '', quantity: '0', purchaseCost: '0', salePrice: '0' });
+  const [editingProductId, setEditingProductId] = useState('');
+  const [productEditForm, setProductEditForm] = useState({
+    sku: '',
+    name: '',
+    unit: 'box',
+    reorderPoint: '0'
+  });
+  const [lotForm, setLotForm] = useState({
+    productId: '',
+    batchNumber: '',
+    receivedAt: todayDateValue(),
+    expirationDate: '',
+    quantity: '0',
+    purchaseCost: '0',
+    salePrice: '0'
+  });
   const [customerForm, setCustomerForm] = useState({ firstName: '', lastName: '', phone: '' });
   const [supplierForm, setSupplierForm] = useState({ name: '', contactName: '', phone: '' });
   const [employeeForm, setEmployeeForm] = useState({ firstName: '', lastName: '', role: '', phone: '' });
@@ -769,11 +807,14 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     {
       productId: '',
       batchNumber: '',
+      expirationDate: '',
       quantity: '1',
       unitCost: '0',
       unitPrice: '0'
     }
   ]);
+  const [lotExpiryStartDate, setLotExpiryStartDate] = useState(todayDateValue);
+  const [lotExpiryEndDate, setLotExpiryEndDate] = useState(() => datePlusDaysValue(60));
   const [expenseForm, setExpenseForm] = useState({ category: '', description: '', amount: '0', paymentMethod: 'CASH' as PaymentMethod });
   const [companyForm, setCompanyForm] = useState<CompanyProfile>({
     companyName: 'Haytazentavo',
@@ -902,15 +943,68 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
+  function startEditProduct(product: CatalogProduct) {
+    setEditingProductId(product.id);
+    setProductEditForm({
+      sku: product.sku ?? '',
+      name: product.name ?? '',
+      unit: product.unit ?? 'unit',
+      reorderPoint: String(num(product.reorderPoint))
+    });
+  }
+
+  async function saveEditedProduct() {
+    if (!editingProductId) return;
+    try {
+      await apiPatch(`inventory/products/${editingProductId}`, {
+        sku: productEditForm.sku,
+        name: productEditForm.name,
+        unit: productEditForm.unit,
+        reorderPoint: n(productEditForm.reorderPoint)
+      });
+      setEditingProductId('');
+      await refresh();
+      setNote(`${t.edit} ${t.product}`);
+    } catch (err) {
+      setNote(`${t.edit} ${t.product} ${t.failed}: ${String(err)}`);
+    }
+  }
+
+  async function deleteProduct(product: CatalogProduct) {
+    const ok = window.confirm(`${t.delete} ${product.name} (${product.sku})?`);
+    if (!ok) return;
+
+    try {
+      await apiDelete(`inventory/products/${product.id}`);
+      if (editingProductId === product.id) {
+        setEditingProductId('');
+      }
+      await refresh();
+      setNote(`${t.delete} ${t.product}`);
+    } catch (err) {
+      setNote(`${t.delete} ${t.product} ${t.failed}: ${String(err)}`);
+    }
+  }
+
   async function saveLot() {
     try {
       await apiPost('inventory/lots/schedule', {
         ...lotForm,
+        receivedAt: lotForm.receivedAt || undefined,
+        expirationDate: lotForm.expirationDate || undefined,
         quantity: n(lotForm.quantity),
         purchaseCost: n(lotForm.purchaseCost),
         salePrice: n(lotForm.salePrice)
       });
-      setLotForm({ productId: '', batchNumber: '', quantity: '0', purchaseCost: '0', salePrice: '0' });
+      setLotForm({
+        productId: '',
+        batchNumber: '',
+        receivedAt: todayDateValue(),
+        expirationDate: '',
+        quantity: '0',
+        purchaseCost: '0',
+        salePrice: '0'
+      });
       await refresh();
       setNote(t.saveLot);
     } catch (err) {
@@ -1006,6 +1100,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     const validPurchaseItems = purchaseSummary.items.map((item) => ({
       productId: item.productId,
       batchNumber: item.batchNumber,
+      expirationDate: item.expirationDate || undefined,
       quantity: item.quantity,
       unitCost: item.unitCost,
       unitPrice: item.unitPrice
@@ -1038,6 +1133,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
         {
           productId: '',
           batchNumber: '',
+          expirationDate: '',
           quantity: '1',
           unitCost: '0',
           unitPrice: '0'
@@ -1117,6 +1213,10 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     [catalog]
   );
   const lotExpiryAlerts = useMemo(() => {
+    const start = lotExpiryStartDate || todayDateValue();
+    const end = lotExpiryEndDate || datePlusDaysValue(60);
+    const rangeStart = start <= end ? start : end;
+    const rangeEnd = start <= end ? end : start;
     return catalog
       .flatMap((product) =>
         (product.lots ?? []).map((lot) => ({
@@ -1125,17 +1225,19 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
           batchNumber: lot.batchNumber ?? '-',
           expirationDate: lot.expirationDate ?? undefined,
           remainingQty: num(lot.remainingQty),
-          daysLeft: daysDiffFromToday(lot.expirationDate ?? undefined)
+          daysLeft: daysDiffFromToday(lot.expirationDate ?? undefined),
+          expirationDay: lot.expirationDate?.slice(0, 10) ?? ''
         }))
       )
       .filter(
         (row) =>
           !!row.expirationDate &&
           row.remainingQty > 0 &&
-          row.daysLeft <= 60
+          row.expirationDay >= rangeStart &&
+          row.expirationDay <= rangeEnd
       )
       .sort((a, b) => a.daysLeft - b.daysLeft);
-  }, [catalog]);
+  }, [catalog, lotExpiryEndDate, lotExpiryStartDate]);
   const receivableAging = useMemo(() => {
     const buckets = { current: 0, days1to30: 0, days31to60: 0, days61plus: 0 };
     receivables.forEach((row) => {
@@ -1328,6 +1430,11 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     (sum, row) => sum + num(row.currentStock) * num(row.currentCost),
     0
   );
+  const inventoryUnitsTotal = catalog.reduce(
+    (sum, row) => sum + num(row.currentStock),
+    0
+  );
+  const inventoryUnitsCardValue = Math.max(num(stats.inventoryUnits), inventoryUnitsTotal);
   const openInvoicesCount = salesHistory.filter((sale) =>
     isOpenDocument(sale.status)
   ).length;
@@ -2079,6 +2186,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
           productId: product.id,
           productName: product.name,
           batchNumber: row.batchNumber || `LOT-${Date.now()}`,
+          expirationDate: row.expirationDate,
           quantity: qty,
           unitCost: cost,
           unitPrice: price,
@@ -2093,6 +2201,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
         productId: string;
         productName: string;
         batchNumber: string;
+        expirationDate?: string;
         quantity: number;
         unitCost: number;
         unitPrice: number;
@@ -2273,8 +2382,8 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
 
     try {
-      await apiPatch(`sales/${sale.id}`, {
-        amountPaid: Math.min(total, currentPaid + paymentAmount)
+      await apiPost(`sales/${sale.id}/payments`, {
+        amount: paymentAmount
       });
       await refresh();
       setSelectedInvoiceId(sale.id);
@@ -2329,7 +2438,14 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const addPurchaseItem = () =>
     setPurchaseItems((prev) => [
       ...prev,
-      { productId: '', batchNumber: '', quantity: '1', unitCost: '0', unitPrice: '0' }
+      {
+        productId: '',
+        batchNumber: '',
+        expirationDate: '',
+        quantity: '1',
+        unitCost: '0',
+        unitPrice: '0'
+      }
     ]);
   const removePurchaseItem = (index: number) =>
     setPurchaseItems((prev) =>
@@ -2520,7 +2636,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <div className="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-4 mb-3">
                       <Metric
                         title={t.inventoryUnits}
-                        value={money(catalog.length)}
+                        value={money(inventoryUnitsCardValue)}
                         note={`${t.registeredProducts} · ${t.clickToOpen}`}
                         onClick={() => changeMenu('inventory')}
                       />
@@ -2571,6 +2687,28 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                             options={catalog.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
                           />
                           <Field label={t.batch} value={lotForm.batchNumber} onChange={(v) => setLotForm({ ...lotForm, batchNumber: v })} />
+                          <div className="mb-2">
+                            <label className="form-label farma-label">{t.receivedDate}</label>
+                            <input
+                              type="date"
+                              className="form-control form-control-sm farma-input"
+                              value={lotForm.receivedAt}
+                              onChange={(e) =>
+                                setLotForm({ ...lotForm, receivedAt: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="mb-2">
+                            <label className="form-label farma-label">{t.expirationDate}</label>
+                            <input
+                              type="date"
+                              className="form-control form-control-sm farma-input"
+                              value={lotForm.expirationDate}
+                              onChange={(e) =>
+                                setLotForm({ ...lotForm, expirationDate: e.target.value })
+                              }
+                            />
+                          </div>
                           <Field label={t.quantity} value={lotForm.quantity} onChange={(v) => setLotForm({ ...lotForm, quantity: v })} />
                           <Field label={t.cost} value={lotForm.purchaseCost} onChange={(v) => setLotForm({ ...lotForm, purchaseCost: v })} />
                           <Field label={t.salePrice} value={lotForm.salePrice} onChange={(v) => setLotForm({ ...lotForm, salePrice: v })} />
@@ -2664,6 +2802,64 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <div className="col-12">
                       <h2 className="farma-section-title">{t.catalog}</h2>
                     </div>
+                    {editingProductId ? (
+                      <div className="col-12 col-xl-5">
+                        <FormCard title={`${t.edit} ${t.product}`}>
+                          <Field
+                            label={t.sku}
+                            value={productEditForm.sku}
+                            onChange={(v) =>
+                              setProductEditForm((prev) => ({ ...prev, sku: v }))
+                            }
+                          />
+                          <Field
+                            label={t.name}
+                            value={productEditForm.name}
+                            onChange={(v) =>
+                              setProductEditForm((prev) => ({ ...prev, name: v }))
+                            }
+                          />
+                          <SelectField
+                            label={t.unit}
+                            value={productEditForm.unit}
+                            onChange={(v) =>
+                              setProductEditForm((prev) => ({ ...prev, unit: v }))
+                            }
+                            options={[
+                              { value: 'box', label: 'box' },
+                              { value: 'unit', label: 'unit' },
+                              { value: 'pack', label: 'pack' }
+                            ]}
+                          />
+                          <Field
+                            label={t.reorderPoint}
+                            value={productEditForm.reorderPoint}
+                            onChange={(v) =>
+                              setProductEditForm((prev) => ({
+                                ...prev,
+                                reorderPoint: v
+                              }))
+                            }
+                          />
+                          <div className="d-flex gap-2 mt-1">
+                            <button
+                              type="button"
+                              className="btn farma-btn flex-fill"
+                              onClick={saveEditedProduct}
+                            >
+                              {t.update}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm farma-btn-ghost flex-fill"
+                              onClick={() => setEditingProductId('')}
+                            >
+                              {t.back}
+                            </button>
+                          </div>
+                        </FormCard>
+                      </div>
+                    ) : null}
                     <div className="col-12">
                       <div className="farma-card p-0 overflow-auto">
                         <table className="table table-sm mb-0 farma-table">
@@ -2674,6 +2870,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                               <th>{t.quantity}</th>
                               <th>{t.salePrice}</th>
                               <th>{t.batch}</th>
+                              <th>{t.actions}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2684,10 +2881,26 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <td>{money(p.currentStock)}</td>
                                 <td>${money(p.currentSalePrice)}</td>
                                 <td>{p.activeLot?.batchNumber ?? '-'}</td>
+                                <td className="d-flex gap-1">
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm farma-btn-ghost farma-action-edit"
+                                    onClick={() => startEditProduct(p)}
+                                  >
+                                    {t.edit}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm farma-action-delete"
+                                    onClick={() => void deleteProduct(p)}
+                                  >
+                                    {t.delete}
+                                  </button>
+                                </td>
                               </tr>
                             ))}
                             {(query ? filteredProducts : catalog).length === 0 ? (
-                              <tr><td colSpan={5}>{t.noData}</td></tr>
+                              <tr><td colSpan={6}>{t.noData}</td></tr>
                             ) : null}
                           </tbody>
                         </table>
@@ -2707,12 +2920,19 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                       />
                     </div>
                     <div className="col-12 col-xl-6">
-                      <TableCard
+                      <LotExpiryTableCard
                         title={t.expiringLots}
-                        headers={[t.product, t.batch, t.daysLeft, t.quantity]}
+                        startLabel={t.startDate}
+                        endLabel={t.endDate}
+                        startDate={lotExpiryStartDate}
+                        endDate={lotExpiryEndDate}
+                        onStartDateChange={setLotExpiryStartDate}
+                        onEndDateChange={setLotExpiryEndDate}
+                        headers={[t.product, t.batch, t.expirationDate, t.daysLeft, t.quantity]}
                         rows={lotExpiryAlerts.map((row) => [
                           `${row.productName} (${row.sku})`,
                           row.batchNumber,
+                          dateShort(row.expirationDate),
                           String(row.daysLeft),
                           String(row.remainingQty)
                         ])}
@@ -3917,6 +4137,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                 <tr>
                                   <th>{t.product}</th>
                                   <th>{t.batch}</th>
+                                  <th>{t.expirationDate}</th>
                                   <th>{t.quantity}</th>
                                   <th>{t.cost}</th>
                                   <th>{t.salePrice}</th>
@@ -3941,6 +4162,20 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                     </td>
                                     <td>
                                       <input className="form-control form-control-sm farma-input" value={item.batchNumber} onChange={(e) => setPurchaseItemField(index, 'batchNumber', e.target.value)} />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="date"
+                                        className="form-control form-control-sm farma-input"
+                                        value={item.expirationDate}
+                                        onChange={(e) =>
+                                          setPurchaseItemField(
+                                            index,
+                                            'expirationDate',
+                                            e.target.value
+                                          )
+                                        }
+                                      />
                                     </td>
                                     <td>
                                       <input className="form-control form-control-sm farma-input" value={item.quantity} onChange={(e) => setPurchaseItemField(index, 'quantity', e.target.value)} />
@@ -4110,12 +4345,19 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                       />
                     </div>
                     <div className="col-12 col-xl-6">
-                      <TableCard
+                      <LotExpiryTableCard
                         title={t.expiringLots}
-                        headers={[t.product, t.batch, t.daysLeft, t.quantity]}
+                        startLabel={t.startDate}
+                        endLabel={t.endDate}
+                        startDate={lotExpiryStartDate}
+                        endDate={lotExpiryEndDate}
+                        onStartDateChange={setLotExpiryStartDate}
+                        onEndDateChange={setLotExpiryEndDate}
+                        headers={[t.product, t.batch, t.expirationDate, t.daysLeft, t.quantity]}
                         rows={lotExpiryAlerts.map((row) => [
                           `${row.productName} (${row.sku})`,
                           row.batchNumber,
+                          dateShort(row.expirationDate),
                           String(row.daysLeft),
                           String(row.remainingQty)
                         ])}
@@ -4350,6 +4592,78 @@ function TableCard({ title, headers, rows, empty }: { title: string; headers: st
         </thead>
         <tbody>
           {rows.length === 0 ? <tr><td colSpan={headers.length}>{empty}</td></tr> : rows.map((r, i) => <tr key={`${r.join('-')}-${i}`}>{r.map((c, idx) => <td key={`${i}-${idx}`}>{c}</td>)}</tr>)}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function LotExpiryTableCard({
+  title,
+  startLabel,
+  endLabel,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  headers,
+  rows,
+  empty
+}: {
+  title: string;
+  startLabel: string;
+  endLabel: string;
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (value: string) => void;
+  onEndDateChange: (value: string) => void;
+  headers: string[];
+  rows: string[][];
+  empty: string;
+}) {
+  return (
+    <div className="farma-card p-0 overflow-auto">
+      <div className="px-3 pt-3">
+        <h3 className="farma-form-title mb-2">{title}</h3>
+        <div className="row g-2 mb-2">
+          <div className="col-12 col-sm-6">
+            <label className="form-label farma-label">{startLabel}</label>
+            <input
+              type="date"
+              className="form-control form-control-sm farma-input"
+              value={startDate}
+              onChange={(e) => onStartDateChange(e.target.value)}
+            />
+          </div>
+          <div className="col-12 col-sm-6">
+            <label className="form-label farma-label">{endLabel}</label>
+            <input
+              type="date"
+              className="form-control form-control-sm farma-input"
+              value={endDate}
+              onChange={(e) => onEndDateChange(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+      <table className="table table-sm mb-0 farma-table">
+        <thead>
+          <tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={headers.length}>{empty}</td>
+            </tr>
+          ) : (
+            rows.map((r, i) => (
+              <tr key={`${r.join('-')}-${i}`}>
+                {r.map((c, idx) => (
+                  <td key={`${i}-${idx}`}>{c}</td>
+                ))}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

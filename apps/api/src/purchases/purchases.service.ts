@@ -43,6 +43,7 @@ export class PurchasesService {
     items: Array<{
       productId: string;
       batchNumber: string;
+      expirationDate?: string;
       quantity: number;
       unitCost: number;
       unitPrice: number;
@@ -102,6 +103,7 @@ export class PurchasesService {
           tenantId: input.tenantId,
           productId: item.productId,
           batchNumber: item.batchNumber,
+          expirationDate: item.expirationDate ? new Date(item.expirationDate) : undefined,
           quantity: item.quantity,
           purchaseCost: item.unitCost,
           salePrice: item.unitPrice,

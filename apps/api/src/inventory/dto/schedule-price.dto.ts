@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class SchedulePriceDto {
   @IsOptional()
@@ -10,6 +10,14 @@ export class SchedulePriceDto {
 
   @IsString()
   batchNumber!: string;
+
+  @IsOptional()
+  @IsDateString()
+  receivedAt?: string;
+
+  @IsOptional()
+  @IsDateString()
+  expirationDate?: string;
 
   @IsNumber()
   quantity!: number;

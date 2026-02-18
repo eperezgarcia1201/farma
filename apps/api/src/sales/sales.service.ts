@@ -360,6 +360,81 @@ export class SalesService {
     });
   }
 
+  async recordPayment(tenantId: string, saleId: string, paymentAmount: number) {
+    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+      throw new BadRequestException('Payment amount must be greater than zero');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const sale = await tx.sale.findFirst({
+        where: { id: saleId, tenantId }
+      });
+      if (!sale) throw new BadRequestException('Sale not found');
+      if (sale.status === DocumentStatus.VOID) {
+        throw new BadRequestException('Cannot record payment for a voided sale');
+      }
+
+      const total = Number(sale.total);
+      const currentPaid = Number(sale.amountPaid);
+      const nextAmountPaid = Math.min(total, currentPaid + paymentAmount);
+      const nextBalance = Math.max(0, total - nextAmountPaid);
+      const nextStatus =
+        nextBalance <= 0
+          ? DocumentStatus.PAID
+          : nextAmountPaid > 0
+            ? DocumentStatus.PARTIALLY_PAID
+            : DocumentStatus.OPEN;
+
+      const updatedSale = await tx.sale.update({
+        where: { id: sale.id },
+        data: {
+          amountPaid: new Prisma.Decimal(nextAmountPaid),
+          balanceDue: new Prisma.Decimal(nextBalance),
+          status: nextStatus
+        }
+      });
+
+      const receivable = await tx.accountReceivable.findUnique({
+        where: { saleId: sale.id }
+      });
+
+      if (receivable) {
+        const receivableStatus =
+          nextBalance <= 0
+            ? DocumentStatus.PAID
+            : nextAmountPaid > 0
+              ? DocumentStatus.PARTIALLY_PAID
+              : DocumentStatus.OPEN;
+        await tx.accountReceivable.update({
+          where: { id: receivable.id },
+          data: {
+            balance: new Prisma.Decimal(nextBalance),
+            status: receivableStatus
+          }
+        });
+      } else if (
+        sale.paymentMethod === PaymentMethod.CREDIT &&
+        sale.customerId &&
+        sale.dueDate &&
+        nextBalance > 0
+      ) {
+        await tx.accountReceivable.create({
+          data: {
+            tenantId,
+            customerId: sale.customerId,
+            saleId: sale.id,
+            originalAmount: sale.total,
+            balance: new Prisma.Decimal(nextBalance),
+            dueDate: sale.dueDate,
+            status: nextStatus
+          }
+        });
+      }
+
+      return updatedSale;
+    });
+  }
+
   async voidSale(tenantId: string, saleId: string) {
     return this.prisma.$transaction(async (tx) => {
       const sale = await tx.sale.findFirst({ where: { id: saleId, tenantId } });

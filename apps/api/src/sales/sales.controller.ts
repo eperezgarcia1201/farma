@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import { RecordSalePaymentDto } from './dto/record-sale-payment.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
 
@@ -65,6 +66,12 @@ export class SalesController {
   async update(@Param('id') id: string, @Body() dto: UpdateSaleDto) {
     const tenantId = await this.getDefaultTenantId();
     return this.salesService.updateSale(tenantId, id, dto);
+  }
+
+  @Post(':id/payments')
+  async recordPayment(@Param('id') id: string, @Body() dto: RecordSalePaymentDto) {
+    const tenantId = await this.getDefaultTenantId();
+    return this.salesService.recordPayment(tenantId, id, dto.amount);
   }
 
   @Delete(':id')

@@ -1,6 +1,14 @@
 import { PaymentMethod } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested
+} from 'class-validator';
 
 class PurchaseItemInput {
   @IsString()
@@ -8,6 +16,10 @@ class PurchaseItemInput {
 
   @IsString()
   batchNumber!: string;
+
+  @IsOptional()
+  @IsDateString()
+  expirationDate?: string;
 
   @IsNumber()
   quantity!: number;

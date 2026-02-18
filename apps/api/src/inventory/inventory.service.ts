@@ -42,11 +42,74 @@ export class InventoryService {
     });
   }
 
+  async updateProduct(
+    tenantId: string,
+    productId: string,
+    input: {
+      sku?: string;
+      name?: string;
+      description?: string;
+      barcode?: string;
+      unit?: string;
+      reorderPoint?: number;
+    }
+  ) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, tenantId }
+    });
+    if (!product) throw new NotFoundException('Product not found');
+
+    return this.prisma.product.update({
+      where: { id: product.id },
+      data: {
+        sku: input.sku ?? undefined,
+        name: input.name ?? undefined,
+        description: input.description ?? undefined,
+        barcode: input.barcode ?? undefined,
+        unit: input.unit ?? undefined,
+        reorderPoint:
+          input.reorderPoint !== undefined
+            ? new Prisma.Decimal(input.reorderPoint)
+            : undefined
+      }
+    });
+  }
+
+  async deleteProduct(tenantId: string, productId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, tenantId },
+      select: {
+        id: true,
+        currentStock: true,
+        _count: {
+          select: {
+            saleItems: true,
+            purchaseItems: true
+          }
+        }
+      }
+    });
+
+    if (!product) throw new NotFoundException('Product not found');
+
+    if (Number(product.currentStock) > 0) {
+      throw new BadRequestException('Cannot delete product while stock is greater than zero');
+    }
+    if (product._count.saleItems > 0 || product._count.purchaseItems > 0) {
+      throw new BadRequestException('Cannot delete product with sales or purchases history');
+    }
+
+    return this.prisma.product.delete({
+      where: { id: product.id }
+    });
+  }
+
   async registerPurchaseLot(
     input: {
       tenantId: string;
       productId: string;
       batchNumber: string;
+      receivedAt?: Date;
       quantity: number;
       purchaseCost: number;
       salePrice: number;
@@ -88,6 +151,7 @@ export class InventoryService {
       tenantId: string;
       productId: string;
       batchNumber: string;
+      receivedAt?: Date;
       quantity: number;
       purchaseCost: number;
       salePrice: number;
@@ -111,6 +175,7 @@ export class InventoryService {
         tenantId: input.tenantId,
         productId: input.productId,
         batchNumber: input.batchNumber,
+        receivedAt: input.receivedAt,
         quantityIn: new Prisma.Decimal(input.quantity),
         remainingQty: new Prisma.Decimal(input.quantity),
         purchaseCost: new Prisma.Decimal(input.purchaseCost),
